@@ -1,12 +1,26 @@
 import { useState } from "react";
-import { FlaskConical, CheckCircle, XCircle, Clock, Beaker } from "lucide-react";
+import { FlaskConical, CheckCircle, XCircle, Clock, Beaker, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const FormulasSection = () => {
   const [selectedFormula, setSelectedFormula] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newFormula, setNewFormula] = useState({
+    name: "",
+    description: "",
+    category: "",
+    batchSize: "",
+    estimatedTime: "",
+    ingredients: [{ name: "", required: "", available: "", unit: "" }]
+  });
 
   const formulas = [
     {
@@ -68,9 +82,9 @@ export const FormulasSection = () => {
     },
   ];
 
-  const getFormulaStatus = (formula: any) => {
+  const getFormulaStatus = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
     const missingIngredients = formula.ingredients.filter(
-      (ing: any) => ing.available < ing.required
+      (ing: { available: number; required: number }) => ing.available < ing.required
     );
     return missingIngredients.length === 0 ? "available" : "incomplete";
   };
@@ -97,18 +111,67 @@ export const FormulasSection = () => {
     }
   };
 
-  const getCompletionPercentage = (formula: any) => {
+  const getCompletionPercentage = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
     const availableCount = formula.ingredients.filter(
-      (ing: any) => ing.available >= ing.required
+      (ing: { available: number; required: number }) => ing.available >= ing.required
     ).length;
     return Math.round((availableCount / formula.ingredients.length) * 100);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewFormula(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleIngredientChange = (index: number, field: string, value: string) => {
+    setNewFormula(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.map((ing, i) => 
+        i === index ? { ...ing, [field]: value } : ing
+      )
+    }));
+  };
+
+  const addIngredient = () => {
+    setNewFormula(prev => ({
+      ...prev,
+      ingredients: [...prev.ingredients, { name: "", required: "", available: "", unit: "" }]
+    }));
+  };
+
+  const removeIngredient = (index: number) => {
+    setNewFormula(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Aquí agregarías la lógica para guardar la nueva fórmula
+    console.log("Nueva fórmula:", newFormula);
+    setIsModalOpen(false);
+    // Resetear el formulario
+    setNewFormula({
+      name: "",
+      description: "",
+      category: "",
+      batchSize: "",
+      estimatedTime: "",
+      ingredients: [{ name: "", required: "", available: "", unit: "" }]
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Gestión de Fórmulas</h2>
-        <Button className="gradient-primary text-primary-foreground">
+        <Button 
+          className="bg-red-600 hover:bg-red-700 text-white"
+          onClick={() => setIsModalOpen(true)}
+        >
           <FlaskConical className="h-4 w-4 mr-2" />
           Nueva Fórmula
         </Button>
@@ -202,6 +265,178 @@ export const FormulasSection = () => {
           );
         })}
       </div>
+
+      {/* Modal para nueva fórmula */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Crear Nueva Fórmula</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre de la Fórmula</Label>
+                <Input
+                  id="name"
+                  value={newFormula.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Ej: Lavanda Premium"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoría</Label>
+                <Select value={newFormula.category} onValueChange={(value) => handleInputChange("category", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="floral">Floral</SelectItem>
+                    <SelectItem value="citrus">Cítrico</SelectItem>
+                    <SelectItem value="woody">Maderoso</SelectItem>
+                    <SelectItem value="oriental">Oriental</SelectItem>
+                    <SelectItem value="fresh">Fresco</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descripción</Label>
+              <Textarea
+                id="description"
+                value={newFormula.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                placeholder="Describe la fórmula y sus características..."
+                rows={3}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="batchSize">Tamaño del Lote (kg)</Label>
+                <Input
+                  id="batchSize"
+                  type="number"
+                  value={newFormula.batchSize}
+                  onChange={(e) => handleInputChange("batchSize", e.target.value)}
+                  placeholder="50"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="estimatedTime">Tiempo Estimado</Label>
+                <Input
+                  id="estimatedTime"
+                  value={newFormula.estimatedTime}
+                  onChange={(e) => handleInputChange("estimatedTime", e.target.value)}
+                  placeholder="4 horas"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Ingredientes */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Ingredientes</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addIngredient}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Agregar Ingrediente
+                </Button>
+              </div>
+
+              {newFormula.ingredients.map((ingredient, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <Label>Nombre</Label>
+                    <Input
+                      value={ingredient.name}
+                      onChange={(e) => handleIngredientChange(index, "name", e.target.value)}
+                      placeholder="Aceite esencial..."
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label>Cantidad Requerida</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={ingredient.required}
+                      onChange={(e) => handleIngredientChange(index, "required", e.target.value)}
+                      placeholder="15"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label>Disponible</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={ingredient.available}
+                      onChange={(e) => handleIngredientChange(index, "available", e.target.value)}
+                      placeholder="25.5"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label>Unidad</Label>
+                    <Select value={ingredient.unit} onValueChange={(value) => handleIngredientChange(index, "unit", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Unidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kg">kg</SelectItem>
+                        <SelectItem value="L">L</SelectItem>
+                        <SelectItem value="ml">ml</SelectItem>
+                        <SelectItem value="g">g</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {newFormula.ingredients.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeIngredient(index)}
+                      className="mt-6"
+                    >
+                      Eliminar
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">
+                Crear Fórmula
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
