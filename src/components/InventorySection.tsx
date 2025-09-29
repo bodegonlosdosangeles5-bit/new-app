@@ -103,10 +103,10 @@ export const InventorySection = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Inventario de Materias Primas</h2>
-        <div className="relative w-96">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Inventario de Materias Primas</h2>
+        <div className="relative w-full sm:w-80 lg:w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Buscar por nombre, ID o ubicación..."
@@ -117,33 +117,36 @@ export const InventorySection = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredItems.map((item) => (
-          <Card key={item.id} className="card-elegant">
+          <Card key={item.id} className="card-elegant hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-lg font-semibold truncate">
                     {item.name}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     ID: {item.id}
                   </p>
                 </div>
-                <Badge variant={getStatusColor(item.status) === "destructive" ? "destructive" : 
-                              getStatusColor(item.status) === "warning" ? "secondary" : "default"}>
+                <Badge 
+                  variant={getStatusColor(item.status) === "destructive" ? "destructive" : 
+                              getStatusColor(item.status) === "warning" ? "secondary" : "default"}
+                  className="flex-shrink-0"
+                >
                   {getStatusText(item.status)}
                 </Badge>
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Stock Actual</span>
+                  <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium">Stock Actual</span>
                 </div>
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-base sm:text-lg font-bold text-foreground">
                   {item.currentStock} {item.unit}
                 </span>
               </div>
@@ -160,21 +163,21 @@ export const InventorySection = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs sm:text-sm truncate">
                   <span className="font-medium">Ubicación:</span> {item.location}
                 </span>
               </div>
 
-              <div className="text-xs text-muted-foreground">
-                <p><span className="font-medium">Proveedor:</span> {item.supplier}</p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p className="truncate"><span className="font-medium">Proveedor:</span> {item.supplier}</p>
                 <p><span className="font-medium">Última actualización:</span> {item.lastUpdate}</p>
               </div>
 
               {item.status !== "normal" && (
-                <div className="flex items-center space-x-2 p-2 rounded-lg bg-warning/10">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <span className="text-xs text-warning-foreground">
+                <div className="flex items-start space-x-2 p-2 rounded-lg bg-warning/10">
+                  <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                  <span className="text-xs text-warning-foreground leading-relaxed">
                     {item.status === "critical" ? "Stock crítico - Ordenar urgente" : "Stock bajo - Considerar pedido"}
                   </span>
                 </div>

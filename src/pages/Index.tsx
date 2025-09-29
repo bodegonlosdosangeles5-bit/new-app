@@ -25,17 +25,19 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gradient-primary mb-2">
+      <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-2">
             Control de Producción
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
             Gestión integral de inventario y formulación de esencias aromáticas
           </p>
         </div>
         
-        {renderSection()}
+        <div className="w-full">
+          {renderSection()}
+        </div>
       </main>
     </div>
   );

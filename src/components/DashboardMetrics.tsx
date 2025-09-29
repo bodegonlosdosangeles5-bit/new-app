@@ -66,29 +66,29 @@ export const DashboardMetrics = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <Card key={index} className="metric-card">
+            <Card key={index} className="metric-card hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
                   {metric.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg bg-${metric.color}/10`}>
-                  <Icon className={`h-4 w-4 text-${metric.color}`} />
+                <div className={`p-2 rounded-lg bg-${metric.color}/10 flex-shrink-0`}>
+                  <Icon className={`h-3 w-3 sm:h-4 sm:w-4 text-${metric.color}`} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">
                   {metric.value}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {metric.subtitle}
                 </p>
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <Progress value={metric.progress} className="h-2" />
                 </div>
               </CardContent>
@@ -100,18 +100,18 @@ export const DashboardMetrics = () => {
       {/* Recent Activity */}
       <Card className="card-elegant">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Actividad Reciente</CardTitle>
+          <CardTitle className="text-base sm:text-lg font-semibold">Actividad Reciente</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className={`w-2 h-2 rounded-full bg-${activity.status === 'success' ? 'success' : 'warning'}`} />
+              <div key={index} className="flex items-start sm:items-center space-x-3 sm:space-x-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className={`w-2 h-2 rounded-full bg-${activity.status === 'success' ? 'success' : 'warning'} flex-shrink-0 mt-2 sm:mt-0`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed">
                     {activity.message}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {activity.time}
                   </p>
                 </div>

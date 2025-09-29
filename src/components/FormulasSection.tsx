@@ -165,11 +165,11 @@ export const FormulasSection = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Gestión de Fórmulas</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Gestión de Fórmulas</h2>
         <Button 
-          className="bg-red-600 hover:bg-red-700 text-white"
+          className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
           onClick={() => setIsModalOpen(true)}
         >
           <FlaskConical className="h-4 w-4 mr-2" />
@@ -177,7 +177,7 @@ export const FormulasSection = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {formulas.map((formula) => {
           const actualStatus = getFormulaStatus(formula);
           const completion = getCompletionPercentage(formula);
@@ -268,13 +268,13 @@ export const FormulasSection = () => {
 
       {/* Modal para nueva fórmula */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Crear Nueva Fórmula</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-bold">Crear Nueva Fórmula</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre de la Fórmula</Label>
                 <Input
@@ -315,7 +315,7 @@ export const FormulasSection = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="batchSize">Tamaño del Lote (kg)</Label>
                 <Input
@@ -342,14 +342,14 @@ export const FormulasSection = () => {
 
             {/* Ingredientes */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Ingredientes</Label>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <Label className="text-sm sm:text-base font-semibold">Ingredientes</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={addIngredient}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4" />
                   Agregar Ingrediente
@@ -357,7 +357,7 @@ export const FormulasSection = () => {
               </div>
 
               {newFormula.ingredients.map((ingredient, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-4 border rounded-lg">
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 p-3 sm:p-4 border rounded-lg">
                   <div className="space-y-1">
                     <Label>Nombre</Label>
                     <Input
@@ -413,7 +413,7 @@ export const FormulasSection = () => {
                       variant="destructive"
                       size="sm"
                       onClick={() => removeIngredient(index)}
-                      className="mt-6"
+                      className="mt-4 sm:mt-6 w-full sm:w-auto sm:col-span-2 lg:col-span-1"
                     >
                       Eliminar
                     </Button>
@@ -422,15 +422,19 @@ export const FormulasSection = () => {
               ))}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsModalOpen(false)}
+                className="w-full sm:w-auto order-2 sm:order-1"
               >
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">
+              <Button 
+                type="submit" 
+                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto order-1 sm:order-2"
+              >
                 Crear Fórmula
               </Button>
             </DialogFooter>

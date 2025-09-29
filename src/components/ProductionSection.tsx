@@ -141,73 +141,76 @@ export const ProductionSection = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Control de Producción</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Control de Producción</h2>
         <div className="flex items-center space-x-4">
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Producción del mes</p>
-            <p className="text-2xl font-bold text-foreground">1,250 kg</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Producción del mes</p>
+            <p className="text-lg sm:text-2xl font-bold text-foreground">1,250 kg</p>
           </div>
-          <TrendingUp className="h-8 w-8 text-success" />
+          <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="current">Producción Actual</TabsTrigger>
-          <TabsTrigger value="completed">Lotes Completados</TabsTrigger>
-          <TabsTrigger value="shipments">Envíos</TabsTrigger>
+          <TabsTrigger value="current" className="text-xs sm:text-sm">Producción Actual</TabsTrigger>
+          <TabsTrigger value="completed" className="text-xs sm:text-sm">Lotes Completados</TabsTrigger>
+          <TabsTrigger value="shipments" className="text-xs sm:text-sm">Envíos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {currentProduction.map((batch) => (
-              <Card key={batch.id} className="card-elegant">
+              <Card key={batch.id} className="card-elegant hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg font-semibold">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg font-semibold truncate">
                         {batch.formula}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Lote: {batch.batchId}
                       </p>
                     </div>
-                    <Badge variant={getStatusColor(batch.status) === "warning" ? "secondary" : "default"}>
+                    <Badge 
+                      variant={getStatusColor(batch.status) === "warning" ? "secondary" : "default"}
+                      className="flex-shrink-0"
+                    >
                       {getStatusText(batch.status)}
                     </Badge>
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
-                      <Weight className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Cantidad</p>
-                        <p className="font-medium">{batch.quantity} {batch.unit}</p>
+                      <Weight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Cantidad</p>
+                        <p className="font-medium text-sm sm:text-base">{batch.quantity} {batch.unit}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Ubicación</p>
-                        <p className="font-medium">{batch.location}</p>
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Ubicación</p>
+                        <p className="font-medium text-sm sm:text-base truncate">{batch.location}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Progreso</span>
                       <span className="font-medium">{batch.progress}%</span>
                     </div>
                     <Progress value={batch.progress} className="h-2" />
                   </div>
 
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><span className="font-medium">Operador:</span> {batch.operator}</p>
+                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                    <p className="truncate"><span className="font-medium">Operador:</span> {batch.operator}</p>
                     <p><span className="font-medium">Inicio:</span> {batch.startDate}</p>
                     <p><span className="font-medium">Estimado:</span> {batch.estimatedCompletion}</p>
                   </div>
@@ -218,27 +221,27 @@ export const ProductionSection = () => {
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {completedBatches.map((batch) => (
-              <Card key={batch.id} className="card-elegant">
+              <Card key={batch.id} className="card-elegant hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg font-semibold">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg font-semibold truncate">
                         {batch.formula}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Lote: {batch.batchId}
                       </p>
                     </div>
-                    <Badge variant="default">
+                    <Badge variant="default" className="flex-shrink-0">
                       Completado
                     </Badge>
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
                     <div>
                       <p className="text-muted-foreground">Objetivo</p>
                       <p className="font-medium">{batch.quantity} {batch.unit}</p>
@@ -250,7 +253,7 @@ export const ProductionSection = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Eficiencia</span>
                       <span className="font-medium">{batch.efficiency}%</span>
                     </div>
@@ -259,9 +262,9 @@ export const ProductionSection = () => {
 
                   <div className="text-xs text-muted-foreground space-y-1">
                     <p><span className="font-medium">Completado:</span> {batch.completedDate}</p>
-                    <p><span className="font-medium">Operador:</span> {batch.operator}</p>
+                    <p className="truncate"><span className="font-medium">Operador:</span> {batch.operator}</p>
                     <p><span className="font-medium">Envío:</span> {batch.shipment}</p>
-                    <p><span className="font-medium">Destino:</span> {batch.destination}</p>
+                    <p className="truncate"><span className="font-medium">Destino:</span> {batch.destination}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -270,46 +273,49 @@ export const ProductionSection = () => {
         </TabsContent>
 
         <TabsContent value="shipments" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {shipments.map((shipment) => (
-              <Card key={shipment.id} className="card-elegant">
+              <Card key={shipment.id} className="card-elegant hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                        <Truck className="h-5 w-5 text-primary" />
-                        <span>{shipment.id}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg font-semibold flex items-center space-x-2">
+                        <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                        <span className="truncate">{shipment.id}</span>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {shipment.destination}
                       </p>
                     </div>
-                    <Badge variant={getStatusColor(shipment.status) === "success" ? "default" : "secondary"}>
+                    <Badge 
+                      variant={getStatusColor(shipment.status) === "success" ? "default" : "secondary"}
+                      className="flex-shrink-0"
+                    >
                       {getStatusText(shipment.status)}
                     </Badge>
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Fecha</p>
-                        <p className="font-medium">{shipment.date}</p>
+                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Fecha</p>
+                        <p className="font-medium text-sm sm:text-base">{shipment.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Weight className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Peso Total</p>
-                        <p className="font-medium">{shipment.totalWeight} kg</p>
+                      <Weight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Peso Total</p>
+                        <p className="font-medium text-sm sm:text-base">{shipment.totalWeight} kg</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Lotes incluidos:</p>
+                    <p className="text-xs sm:text-sm font-medium">Lotes incluidos:</p>
                     <div className="flex flex-wrap gap-1">
                       {shipment.batches.map((batch, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -319,8 +325,8 @@ export const ProductionSection = () => {
                     </div>
                   </div>
 
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><span className="font-medium">Conductor:</span> {shipment.driver}</p>
+                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                    <p className="truncate"><span className="font-medium">Conductor:</span> {shipment.driver}</p>
                     <p><span className="font-medium">Vehículo:</span> {shipment.truck}</p>
                   </div>
                 </CardContent>
