@@ -92,11 +92,11 @@ export const FormulasSection = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "available":
-        return <CheckCircle className="h-5 w-5 text-success" />;
+        return <CheckCircle className="h-6 w-6 text-white" />;
       case "incomplete":
-        return <XCircle className="h-5 w-5 text-destructive" />;
+        return <XCircle className="h-6 w-6 text-white" />;
       default:
-        return <Clock className="h-5 w-5 text-warning" />;
+        return <Clock className="h-6 w-6 text-white" />;
     }
   };
 
@@ -172,7 +172,7 @@ export const FormulasSection = () => {
           className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
           onClick={() => setIsModalOpen(true)}
         >
-          <FlaskConical className="h-4 w-4 mr-2" />
+          <FlaskConical className="h-6 w-6 mr-2" />
           Nueva Fórmula
         </Button>
       </div>
@@ -188,7 +188,7 @@ export const FormulasSection = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-                      <Beaker className="h-5 w-5 text-primary" />
+                      <Beaker className="h-6 w-6 text-white" />
                       <span>{formula.name}</span>
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -351,7 +351,7 @@ export const FormulasSection = () => {
                   onClick={addIngredient}
                   className="flex items-center gap-2 w-full sm:w-auto"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-6 w-6" />
                   Agregar Ingrediente
                 </Button>
               </div>

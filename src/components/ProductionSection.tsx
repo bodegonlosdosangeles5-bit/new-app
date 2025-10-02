@@ -186,14 +186,14 @@ export const ProductionSection = () => {
                 <CardContent className="space-y-3 sm:space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
-                      <Weight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <Weight className="h-6 w-6 text-white flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Cantidad</p>
                         <p className="font-medium text-sm sm:text-base">{batch.quantity} {batch.unit}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <MapPin className="h-6 w-6 text-white flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Ubicación</p>
                         <p className="font-medium text-sm sm:text-base truncate">{batch.location}</p>
@@ -280,7 +280,7 @@ export const ProductionSection = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <CardTitle className="text-base sm:text-lg font-semibold flex items-center space-x-2">
-                        <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                        <Truck className="h-6 w-6 text-white flex-shrink-0" />
                         <span className="truncate">{shipment.id}</span>
                       </CardTitle>
                       <p className="text-xs sm:text-sm text-muted-foreground truncate">
@@ -299,14 +299,14 @@ export const ProductionSection = () => {
                 <CardContent className="space-y-3 sm:space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <Calendar className="h-6 w-6 text-white flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Fecha</p>
                         <p className="font-medium text-sm sm:text-base">{shipment.date}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Weight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <Weight className="h-6 w-6 text-white flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm text-muted-foreground">Peso Total</p>
                         <p className="font-medium text-sm sm:text-base">{shipment.totalWeight} kg</p>

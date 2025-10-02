@@ -78,7 +78,7 @@ export const DashboardMetrics = () => {
                   {metric.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg bg-${metric.color}/10 flex-shrink-0`}>
-                  <Icon className={`h-3 w-3 sm:h-4 sm:w-4 text-${metric.color}`} />
+                  <Icon className="h-6 w-6 text-white" />
                 </div>
               </CardHeader>
               <CardContent>

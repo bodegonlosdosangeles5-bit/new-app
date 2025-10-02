@@ -1,5 +1,6 @@
 import { BarChart3, Package, FlaskConical, Truck, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 
 interface NavigationProps {
@@ -33,7 +34,7 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-2">
+          <div className="hidden md:flex items-center space-x-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -48,21 +49,24 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                 </Button>
               );
             })}
+            <ThemeToggle />
           </div>
 
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
+          {/* Mobile Menu Button and Theme Toggle */}
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation Menu */}

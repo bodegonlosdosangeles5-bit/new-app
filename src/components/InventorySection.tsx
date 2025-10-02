@@ -143,7 +143,7 @@ export const InventorySection = () => {
             <CardContent className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <Package className="h-6 w-6 text-white flex-shrink-0" />
                   <span className="text-xs sm:text-sm font-medium">Stock Actual</span>
                 </div>
                 <span className="text-base sm:text-lg font-bold text-foreground">
@@ -163,7 +163,7 @@ export const InventorySection = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <MapPin className="h-6 w-6 text-white flex-shrink-0" />
                 <span className="text-xs sm:text-sm truncate">
                   <span className="font-medium">Ubicación:</span> {item.location}
                 </span>
