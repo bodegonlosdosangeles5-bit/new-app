@@ -31,6 +31,13 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
     );
   }, [formulas]);
 
+  // Calcular la producción total del mes sumando los kilogramos de todas las fórmulas terminadas
+  const monthlyProduction = useMemo(() => {
+    return formulas
+      .filter(formula => formula.status === "available" && formula.destination === "Villa Martelli")
+      .reduce((total, formula) => total + formula.batchSize, 0);
+  }, [formulas]);
+
 
   const shipments = [
     {
@@ -100,7 +107,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         <div className="flex items-center space-x-4">
           <div className="text-right">
             <p className="text-xs sm:text-sm text-muted-foreground">Producción del mes</p>
-            <p className="text-lg sm:text-2xl font-bold text-foreground">1,250 kg</p>
+            <p className="text-lg sm:text-2xl font-bold text-foreground">{monthlyProduction.toLocaleString()} kg</p>
           </div>
           <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
         </div>
@@ -113,46 +120,55 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         </TabsList>
 
         <TabsContent value="current" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {currentProduction.map((formula) => (
-              <Card key={formula.id} className="card-elegant hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg font-semibold text-white">
-                        {formula.name}
-                      </CardTitle>
-                      <p className="text-base text-white/80 mt-1">
-                        Lote: {formula.id} • Cantidad: {formula.batchSize} kg
-                      </p>
-                      <p className="text-base text-white font-medium mt-1">
-                        Destino: {formula.destination}
-                      </p>
-                      <p className="text-sm text-white/80 mt-1">
-                        Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        }) : 'No especificada'}
-                      </p>
-                      <p className="text-sm text-white/80 mt-1">
-                        Para: {formula.type === "client" ? "Cliente" : "Stock"}
-                        {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
-                      </p>
+          {currentProduction.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground text-lg">No hay fórmulas terminadas para Villa Martelli</p>
+              <p className="text-muted-foreground text-sm mt-2">
+                Las fórmulas terminadas con destino "Villa Martelli" aparecerán aquí automáticamente
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {currentProduction.map((formula) => (
+                <Card key={formula.id} className="card-elegant hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base sm:text-lg font-semibold text-white">
+                          {formula.name}
+                        </CardTitle>
+                        <p className="text-base text-white/80 mt-1">
+                          Lote: {formula.id} • Cantidad: {formula.batchSize} kg
+                        </p>
+                        <p className="text-base text-white font-medium mt-1">
+                          Destino: {formula.destination}
+                        </p>
+                        <p className="text-sm text-white/80 mt-1">
+                          Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }) : 'No especificada'}
+                        </p>
+                        <p className="text-sm text-white/80 mt-1">
+                          Para: {formula.type === "client" ? "Cliente" : "Stock"}
+                          {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end space-y-2">
+                        <Badge 
+                          variant="default"
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          Terminada
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end space-y-2">
-                      <Badge 
-                        variant="default"
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        Terminada
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
 

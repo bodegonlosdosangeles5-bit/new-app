@@ -34,73 +34,8 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
     missingIngredients: [{ name: "", required: "", unit: "" }]
   });
 
-  // Inicializar con datos de ejemplo si no hay fórmulas
-  const initialFormulas = [
-    {
-      id: "F001",
-      name: "Lavanda Premium",
-      description: "Fragancia clásica de lavanda con notas florales",
-      category: "Floral",
-      batchSize: 50,
-      status: "available",
-      estimatedTime: "4 horas",
-      destination: "Florencio Varela",
-      ingredients: [
-        { name: "Aceite Esencial de Lavanda", required: 15, available: 25.5, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 30, available: 180, unit: "L" },
-        { name: "Benzilacetato", required: 2.5, available: 12.8, unit: "kg" },
-        { name: "Linalool Sintético", required: 1.2, available: 2.1, unit: "kg" },
-      ],
-    },
-    {
-      id: "F002",
-      name: "Rosa Elegante",
-      description: "Esencia refinada con pétalos de rosa búlgara",
-      category: "Floral",
-      batchSize: 25,
-      status: "incomplete",
-      estimatedTime: "6 horas",
-      destination: "Villa Martelli",
-      ingredients: [
-        { name: "Aceite de Rosa Búlgara", required: 10, available: 5.2, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 15, available: 180, unit: "L" },
-        { name: "Benzilacetato", required: 1.8, available: 12.8, unit: "kg" },
-      ],
-    },
-    {
-      id: "F003",
-      name: "Citrus Fresh",
-      description: "Mezcla energizante de cítricos mediterráneos",
-      category: "Cítrica",
-      batchSize: 75,
-      status: "available",
-      estimatedTime: "3 horas",
-      destination: "Villa Martelli",
-      ingredients: [
-        { name: "Aceite Esencial de Lavanda", required: 8, available: 25.5, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 45, available: 180, unit: "L" },
-        { name: "Linalool Sintético", required: 3.2, available: 2.1, unit: "kg" },
-      ],
-    },
-    {
-      id: "F004",
-      name: "Maderas Nobles",
-      description: "Fragancia amaderada con cedro y sándalo",
-      category: "Amaderada",
-      batchSize: 40,
-      status: "incomplete",
-      estimatedTime: "5 horas",
-      destination: "Florencio Varela",
-      ingredients: [
-        { name: "Aceite Esencial de Lavanda", required: 12, available: 25.5, unit: "kg" },
-        { name: "Linalool Sintético", required: 4.5, available: 2.1, unit: "kg" },
-        { name: "Benzilacetato", required: 3.2, available: 12.8, unit: "kg" },
-      ],
-    },
-  ];
-
-  // Usar fórmulas de props o inicializar con datos de ejemplo
-  const currentFormulas = formulas.length > 0 ? formulas : initialFormulas;
+  // Usar las fórmulas pasadas como prop
+  const currentFormulas = formulas;
 
 
   const getFormulaStatus = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
