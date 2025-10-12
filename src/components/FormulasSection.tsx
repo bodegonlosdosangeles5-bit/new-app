@@ -10,7 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const FormulasSection = () => {
+interface FormulasSectionProps {
+  formulas: any[];
+  setFormulas: (formulas: any[]) => void;
+}
+
+export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps) => {
   const [selectedFormula, setSelectedFormula] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -23,11 +28,14 @@ export const FormulasSection = () => {
     name: "",
     batchSize: "",
     destination: "",
-    allMaterias: [{ name: "", required: "", available: "", unit: "" }],
+    date: "",
+    type: "stock", // "stock" o "client"
+    clientName: "",
     missingIngredients: [{ name: "", required: "", unit: "" }]
   });
 
-  const [formulas, setFormulas] = useState([
+  // Inicializar con datos de ejemplo si no hay fórmulas
+  const initialFormulas = [
     {
       id: "F001",
       name: "Lavanda Premium",
@@ -89,7 +97,10 @@ export const FormulasSection = () => {
         { name: "Benzilacetato", required: 3.2, available: 12.8, unit: "kg" },
       ],
     },
-  ]);
+  ];
+
+  // Usar fórmulas de props o inicializar con datos de ejemplo
+  const currentFormulas = formulas.length > 0 ? formulas : initialFormulas;
 
 
   const getFormulaStatus = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
@@ -113,7 +124,7 @@ export const FormulasSection = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "available":
-        return "Lista para producir";
+        return "Terminada";
       case "incomplete":
         return "Material insuficiente";
       default:
@@ -129,7 +140,7 @@ export const FormulasSection = () => {
   };
 
   // Filtrar fórmulas según el estado y destino seleccionado
-  const filteredFormulas = formulas.filter(formula => {
+  const filteredFormulas = currentFormulas.filter(formula => {
     const actualStatus = getFormulaStatus(formula);
     const statusMatch = showOnlyIncomplete ? actualStatus === "incomplete" : true;
     const destinationMatch = destinationFilter === "all" || formula.destination === destinationFilter;
@@ -192,15 +203,7 @@ export const FormulasSection = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Combinar materias completas y faltantes
-    const allMaterias = newFormula.allMaterias.map(ing => ({
-      name: ing.name,
-      required: parseFloat(ing.required),
-      available: parseFloat(ing.available),
-      unit: ing.unit
-    }));
-    
-    // Agregar materias faltantes si existen
+    // Solo usar materias primas faltantes
     const missingIngredients = newFormula.missingIngredients.map(ing => ({
       name: ing.name,
       required: parseFloat(ing.required),
@@ -208,22 +211,22 @@ export const FormulasSection = () => {
       unit: ing.unit
     }));
     
-    const allIngredientsCombined = [...allMaterias, ...missingIngredients];
-    
-    // Determinar el estado basado en si hay ingredientes faltantes
+    // Determinar el estado basado en si hay materias faltantes
     const hasMissingIngredients = missingIngredients.length > 0;
-    const hasInsufficientIngredients = allIngredientsCombined.some(ing => ing.available < ing.required);
-    const status = (hasMissingIngredients || hasInsufficientIngredients) ? "incomplete" : "available";
+    const status = hasMissingIngredients ? "incomplete" : "available";
     
     const formulaToAdd = {
       ...newFormula,
       id: newFormula.lot, // Usar el lote como ID
       batchSize: parseInt(newFormula.batchSize),
       status: status,
-      ingredients: allIngredientsCombined
+      date: newFormula.date,
+      type: newFormula.type,
+      clientName: newFormula.type === "client" ? newFormula.clientName : "",
+      ingredients: missingIngredients
     };
     
-    setFormulas(prev => [...prev, formulaToAdd]);
+    setFormulas([...currentFormulas, formulaToAdd]);
     setIsModalOpen(false);
     // Resetear el formulario
     setNewFormula({
@@ -232,7 +235,9 @@ export const FormulasSection = () => {
       name: "",
       batchSize: "",
       destination: "",
-      allMaterias: [{ name: "", required: "", available: "", unit: "" }],
+      date: "",
+      type: "stock",
+      clientName: "",
       missingIngredients: [{ name: "", required: "", unit: "" }]
     });
   };
@@ -245,7 +250,7 @@ export const FormulasSection = () => {
   const handleUpdateFormula = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingFormula) {
-      setFormulas(prev => prev.map(formula => 
+      setFormulas(currentFormulas.map(formula => 
         formula.id === editingFormula.id ? editingFormula : formula
       ));
       setIsEditModalOpen(false);
@@ -336,10 +341,24 @@ export const FormulasSection = () => {
                     <p className="text-base text-white font-medium mt-1">
                       Destino: {formula.destination}
                     </p>
+                    <p className="text-sm text-white/80 mt-1">
+                      Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) : 'No especificada'}
+                    </p>
+                    <p className="text-sm text-white/80 mt-1">
+                      Para: {formula.type === "client" ? "Cliente" : "Stock"}
+                      {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
                     {getStatusIcon(actualStatus)}
-                    <Badge variant={actualStatus === "available" ? "default" : "destructive"}>
+                    <Badge 
+                      variant={actualStatus === "available" ? "default" : "destructive"}
+                      className={actualStatus === "available" ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                    >
                       {getStatusText(actualStatus)}
                     </Badge>
                   </div>
@@ -384,19 +403,12 @@ export const FormulasSection = () => {
                   <div className="text-center py-4">
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
                     <p className="text-base text-white font-medium">
-                      Todos los materiales están disponibles
+                      Terminada
                     </p>
                   </div>
                 )}
 
-                <div className="flex space-x-2 pt-2">
-                  <Button 
-                    variant={actualStatus === "available" ? "default" : "secondary"}
-                    disabled={actualStatus !== "available"}
-                    className="flex-1"
-                  >
-                    {actualStatus === "available" ? "Iniciar Producción" : "Material Insuficiente"}
-                  </Button>
+                <div className="flex justify-end pt-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -458,100 +470,60 @@ export const FormulasSection = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="destination">Destino</Label>
-              <Select value={newFormula.destination} onValueChange={(value) => handleInputChange("destination", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar destino" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Florencio Varela">Florencio Varela (Uso Interno)</SelectItem>
-                  <SelectItem value="Villa Martelli">Villa Martelli (Sucursal)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Materias Completas */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <Label className="text-sm sm:text-base font-semibold">Materias Completas (Disponibles)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addAllMateria}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4" />
-                  Agregar Materia
-                </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="destination">Destino</Label>
+                <Select value={newFormula.destination} onValueChange={(value) => handleInputChange("destination", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar destino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Florencio Varela">Florencio Varela (Uso Interno)</SelectItem>
+                    <SelectItem value="Villa Martelli">Villa Martelli (Sucursal)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-
-              {newFormula.allMaterias.map((ingredient, index) => (
-                <div key={index} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 p-3 sm:p-4 border rounded-lg bg-green-50">
-                  <div className="space-y-1">
-                    <Label>Nombre de la Materia</Label>
-                    <Input
-                      value={ingredient.name}
-                      onChange={(e) => handleAllMateriaChange(index, "name", e.target.value)}
-                      placeholder="Ej: Aceite Esencial de Lavanda"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label>Cantidad Requerida</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={ingredient.required}
-                      onChange={(e) => handleAllMateriaChange(index, "required", e.target.value)}
-                      placeholder="15"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label>Cantidad Disponible</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={ingredient.available}
-                      onChange={(e) => handleAllMateriaChange(index, "available", e.target.value)}
-                      placeholder="25.5"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label>Unidad</Label>
-                    <Select value={ingredient.unit} onValueChange={(value) => handleAllMateriaChange(index, "unit", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Unidad" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kg">kg</SelectItem>
-                        <SelectItem value="L">L</SelectItem>
-                        <SelectItem value="ml">ml</SelectItem>
-                        <SelectItem value="g">g</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {newFormula.allMaterias.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeAllMateria(index)}
-                      className="mt-4 sm:mt-6 w-full sm:w-auto sm:col-span-2 lg:col-span-1"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              ))}
+              
+              <div className="space-y-2">
+                <Label htmlFor="date">Fecha</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newFormula.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
-            {/* Materias Primas Faltantes (Opcional) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="type">Para</Label>
+                <Select value={newFormula.type} onValueChange={(value) => handleInputChange("type", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar para" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stock">Stock</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Nombre del Cliente</Label>
+                <Input
+                  id="clientName"
+                  value={newFormula.clientName}
+                  onChange={(e) => handleInputChange("clientName", e.target.value)}
+                  placeholder={newFormula.type === "client" ? "Nombre del cliente" : "Solo para clientes"}
+                  disabled={newFormula.type === "stock"}
+                  required={newFormula.type === "client"}
+                />
+              </div>
+            </div>
+
+            {/* Materias Primas Faltantes */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <Label className="text-sm sm:text-base font-semibold">Materias Primas Faltantes (Opcional)</Label>
@@ -685,20 +657,63 @@ export const FormulasSection = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-destination">Destino</Label>
-                <Select 
-                  value={editingFormula.destination} 
-                  onValueChange={(value) => setEditingFormula(prev => ({ ...prev, destination: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar destino" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Florencio Varela">Florencio Varela (Uso Interno)</SelectItem>
-                    <SelectItem value="Villa Martelli">Villa Martelli (Sucursal)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-destination">Destino</Label>
+                  <Select 
+                    value={editingFormula.destination} 
+                    onValueChange={(value) => setEditingFormula(prev => ({ ...prev, destination: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar destino" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Florencio Varela">Florencio Varela (Uso Interno)</SelectItem>
+                      <SelectItem value="Villa Martelli">Villa Martelli (Sucursal)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Fecha</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editingFormula.date || ""}
+                    onChange={(e) => setEditingFormula(prev => ({ ...prev, date: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-type">Para</Label>
+                  <Select 
+                    value={editingFormula.type || "stock"} 
+                    onValueChange={(value) => setEditingFormula(prev => ({ ...prev, type: value, clientName: value === "stock" ? "" : prev.clientName }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar para" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stock">Stock</SelectItem>
+                      <SelectItem value="client">Cliente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-clientName">Nombre del Cliente</Label>
+                  <Input
+                    id="edit-clientName"
+                    value={editingFormula.clientName || ""}
+                    onChange={(e) => setEditingFormula(prev => ({ ...prev, clientName: e.target.value }))}
+                    placeholder={editingFormula.type === "client" ? "Nombre del cliente" : "Solo para clientes"}
+                    disabled={editingFormula.type === "stock"}
+                    required={editingFormula.type === "client"}
+                  />
+                </div>
               </div>
 
               {/* Materias Primas Faltantes editables */}

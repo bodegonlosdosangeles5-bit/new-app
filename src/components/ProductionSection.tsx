@@ -1,83 +1,36 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Truck, Calendar, Weight, MapPin, Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const ProductionSection = () => {
+interface Formula {
+  id: string;
+  name: string;
+  batchSize: number;
+  destination: string;
+  status: string;
+  date: string;
+  type: string;
+  clientName: string;
+  ingredients: Array<{ name: string; required: number; available: number; unit: string }>;
+}
+
+interface ProductionSectionProps {
+  formulas?: Formula[];
+}
+
+export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => {
   const [activeTab, setActiveTab] = useState("current");
 
-  const currentProduction = [
-    {
-      id: "P001",
-      formula: "Lavanda Premium",
-      batchId: "L-2024-089",
-      quantity: 50,
-      unit: "kg",
-      startDate: "2024-01-15",
-      estimatedCompletion: "2024-01-15",
-      progress: 75,
-      status: "in-progress",
-      operator: "María González",
-      location: "Reactor A-1",
-    },
-    {
-      id: "P002",
-      formula: "Citrus Fresh",
-      batchId: "C-2024-012",
-      quantity: 75,
-      unit: "kg",
-      startDate: "2024-01-14",
-      estimatedCompletion: "2024-01-16",
-      progress: 45,
-      status: "in-progress",
-      operator: "Carlos Ruiz",
-      location: "Reactor B-2",
-    },
-  ];
+  // Mostrar fórmulas terminadas con destino a Villa Martelli
+  const currentProduction = useMemo(() => {
+    return formulas.filter(formula => 
+      formula.status === "available" && formula.destination === "Villa Martelli"
+    );
+  }, [formulas]);
 
-  const completedBatches = [
-    {
-      id: "P003",
-      formula: "Rosa Elegante",
-      batchId: "R-2024-085",
-      quantity: 25,
-      unit: "kg",
-      completedDate: "2024-01-13",
-      actualYield: 24.8,
-      efficiency: 99.2,
-      shipment: "SHIP-001",
-      destination: "Cliente Premium SA",
-      operator: "Ana López",
-    },
-    {
-      id: "P004",
-      formula: "Lavanda Premium",
-      batchId: "L-2024-084",
-      quantity: 50,
-      unit: "kg",
-      completedDate: "2024-01-12",
-      actualYield: 49.5,
-      efficiency: 99.0,
-      shipment: "SHIP-002",
-      destination: "Distribuidora Norte",
-      operator: "María González",
-    },
-    {
-      id: "P005",
-      formula: "Maderas Nobles",
-      batchId: "M-2024-021",
-      quantity: 40,
-      unit: "kg",
-      completedDate: "2024-01-10",
-      actualYield: 38.9,
-      efficiency: 97.3,
-      shipment: "SHIP-003",
-      destination: "Exportadora Global",
-      operator: "Jorge Mendez",
-    },
-  ];
 
   const shipments = [
     {
@@ -154,123 +107,54 @@ export const ProductionSection = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="current" className="text-xs sm:text-sm">Producción Actual</TabsTrigger>
-          <TabsTrigger value="completed" className="text-xs sm:text-sm">Lotes Completados</TabsTrigger>
           <TabsTrigger value="shipments" className="text-xs sm:text-sm">Envíos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {currentProduction.map((batch) => (
-              <Card key={batch.id} className="card-elegant hover:shadow-md transition-shadow">
+            {currentProduction.map((formula) => (
+              <Card key={formula.id} className="card-elegant hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg font-semibold truncate">
-                        {batch.formula}
+                      <CardTitle className="text-base sm:text-lg font-semibold text-white">
+                        {formula.name}
                       </CardTitle>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Lote: {batch.batchId}
+                      <p className="text-base text-white/80 mt-1">
+                        Lote: {formula.id} • Cantidad: {formula.batchSize} kg
+                      </p>
+                      <p className="text-base text-white font-medium mt-1">
+                        Destino: {formula.destination}
+                      </p>
+                      <p className="text-sm text-white/80 mt-1">
+                        Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }) : 'No especificada'}
+                      </p>
+                      <p className="text-sm text-white/80 mt-1">
+                        Para: {formula.type === "client" ? "Cliente" : "Stock"}
+                        {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
                       </p>
                     </div>
-                    <Badge 
-                      variant={getStatusColor(batch.status) === "warning" ? "secondary" : "default"}
-                      className="flex-shrink-0"
-                    >
-                      {getStatusText(batch.status)}
-                    </Badge>
+                    <div className="flex flex-col items-end space-y-2">
+                      <Badge 
+                        variant="default"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        Terminada
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
-
-                <CardContent className="space-y-3 sm:space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Weight className="h-6 w-6 text-white flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Cantidad</p>
-                        <p className="font-medium text-sm sm:text-base">{batch.quantity} {batch.unit}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-6 w-6 text-white flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Ubicación</p>
-                        <p className="font-medium text-sm sm:text-base truncate">{batch.location}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-muted-foreground">Progreso</span>
-                      <span className="font-medium">{batch.progress}%</span>
-                    </div>
-                    <Progress value={batch.progress} className="h-2" />
-                  </div>
-
-                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-                    <p className="truncate"><span className="font-medium">Operador:</span> {batch.operator}</p>
-                    <p><span className="font-medium">Inicio:</span> {batch.startDate}</p>
-                    <p><span className="font-medium">Estimado:</span> {batch.estimatedCompletion}</p>
-                  </div>
-                </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {completedBatches.map((batch) => (
-              <Card key={batch.id} className="card-elegant hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg font-semibold truncate">
-                        {batch.formula}
-                      </CardTitle>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Lote: {batch.batchId}
-                      </p>
-                    </div>
-                    <Badge variant="default" className="flex-shrink-0">
-                      Completado
-                    </Badge>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-3 sm:space-y-4">
-                  <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Objetivo</p>
-                      <p className="font-medium">{batch.quantity} {batch.unit}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Producido</p>
-                      <p className="font-medium text-success">{batch.actualYield} {batch.unit}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-muted-foreground">Eficiencia</span>
-                      <span className="font-medium">{batch.efficiency}%</span>
-                    </div>
-                    <Progress value={batch.efficiency} className="h-1" />
-                  </div>
-
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><span className="font-medium">Completado:</span> {batch.completedDate}</p>
-                    <p className="truncate"><span className="font-medium">Operador:</span> {batch.operator}</p>
-                    <p><span className="font-medium">Envío:</span> {batch.shipment}</p>
-                    <p className="truncate"><span className="font-medium">Destino:</span> {batch.destination}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
 
         <TabsContent value="shipments" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

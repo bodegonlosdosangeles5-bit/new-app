@@ -7,15 +7,16 @@ import { ProductionSection } from "@/components/ProductionSection";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [formulas, setFormulas] = useState([]);
 
   const renderSection = () => {
     switch (activeSection) {
       case "inventory":
         return <InventorySection />;
       case "formulas":
-        return <FormulasSection />;
+        return <FormulasSection formulas={formulas} setFormulas={setFormulas} />;
       case "production":
-        return <ProductionSection />;
+        return <ProductionSection formulas={formulas} />;
       default:
         return <DashboardMetrics />;
     }
