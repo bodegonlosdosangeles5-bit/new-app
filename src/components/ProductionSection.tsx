@@ -24,18 +24,41 @@ interface ProductionSectionProps {
 export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => {
   const [activeTab, setActiveTab] = useState("current");
 
+  // Función para normalizar texto (quitar tildes, espacios y convertir a minúsculas)
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Quitar tildes
+      .replace(/\s+/g, ''); // Quitar espacios
+  };
+
   // Mostrar fórmulas terminadas con destino a Villa Martelli
   const currentProduction = useMemo(() => {
-    return formulas.filter(formula => 
-      formula.status === "available" && formula.destination === "Villa Martelli"
-    );
+    return formulas.filter(formula => {
+      const normalizedStatus = normalizeText(formula.status);
+      const normalizedDestination = normalizeText(formula.destination);
+      
+      const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
+      const isVillaMartelli = normalizedDestination === 'villamartelli';
+      
+      return isTerminated && isVillaMartelli;
+    });
   }, [formulas]);
 
   // Calcular la producción total del mes sumando los kilogramos de todas las fórmulas terminadas
   const monthlyProduction = useMemo(() => {
     return formulas
-      .filter(formula => formula.status === "available" && formula.destination === "Villa Martelli")
-      .reduce((total, formula) => total + formula.batchSize, 0);
+      .filter(formula => {
+        const normalizedStatus = normalizeText(formula.status);
+        const normalizedDestination = normalizeText(formula.destination);
+        
+        const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
+        const isVillaMartelli = normalizedDestination === 'villamartelli';
+        
+        return isTerminated && isVillaMartelli;
+      })
+      .reduce((total, formula) => total + (formula.batchSize || 0), 0);
   }, [formulas]);
 
 
@@ -103,13 +126,13 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Control de Producción</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-black dark:text-white">Control de Producción</h2>
         <div className="flex items-center space-x-4">
           <div className="text-right">
-            <p className="text-xs sm:text-sm text-muted-foreground">Producción del mes</p>
-            <p className="text-lg sm:text-2xl font-bold text-foreground">{monthlyProduction.toLocaleString()} kg</p>
+            <p className="text-xs sm:text-sm text-black/80 dark:text-white/80">Producción del mes</p>
+            <p className="text-lg sm:text-2xl font-bold text-black dark:text-white">{monthlyProduction.toLocaleString()} kg</p>
           </div>
-          <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
+          <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
         </div>
       </div>
 
@@ -122,35 +145,35 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         <TabsContent value="current" className="space-y-4">
           {currentProduction.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground text-lg">No hay fórmulas terminadas para Villa Martelli</p>
-              <p className="text-muted-foreground text-sm mt-2">
+              <p className="text-muted-foreground text-lg text-black dark:text-white">No hay fórmulas terminadas para Villa Martelli</p>
+              <p className="text-muted-foreground text-sm mt-2 text-black dark:text-white">
                 Las fórmulas terminadas con destino "Villa Martelli" aparecerán aquí automáticamente
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {currentProduction.map((formula) => (
-                <Card key={formula.id} className="card-elegant hover:shadow-md transition-shadow">
-                  <CardHeader>
+                <Card key={formula.id} className="card-elegant hover:shadow-md transition-shadow h-64">
+                  <CardHeader className="h-full flex flex-col justify-between">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base sm:text-lg font-semibold text-white">
+                        <CardTitle className="text-base sm:text-lg font-semibold text-black dark:text-white">
                           {formula.name}
                         </CardTitle>
-                        <p className="text-base text-white/80 mt-1">
+                        <p className="text-base text-black/80 dark:text-white/80 mt-1">
                           Lote: {formula.id} • Cantidad: {formula.batchSize} kg
                         </p>
-                        <p className="text-base text-white font-medium mt-1">
+                        <p className="text-base text-black dark:text-white font-medium mt-1">
                           Destino: {formula.destination}
                         </p>
-                        <p className="text-sm text-white/80 mt-1">
+                        <p className="text-sm text-black/80 dark:text-white/80 mt-1">
                           Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric'
                           }) : 'No especificada'}
                         </p>
-                        <p className="text-sm text-white/80 mt-1">
+                        <p className="text-sm text-black/80 dark:text-white/80 mt-1">
                           Para: {formula.type === "client" ? "Cliente" : "Stock"}
                           {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
                         </p>
@@ -175,15 +198,15 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         <TabsContent value="shipments" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {shipments.map((shipment) => (
-              <Card key={shipment.id} className="card-elegant hover:shadow-md transition-shadow">
-                <CardHeader>
+              <Card key={shipment.id} className="card-elegant hover:shadow-md transition-shadow h-64">
+                <CardHeader className="h-full flex flex-col justify-between">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg font-semibold flex items-center space-x-2">
-                        <Truck className="h-6 w-6 text-white flex-shrink-0" />
+                      <CardTitle className="text-base sm:text-lg font-semibold flex items-center space-x-2 text-black dark:text-white">
+                        <Truck className="h-6 w-6 text-black dark:text-white flex-shrink-0" />
                         <span className="truncate">{shipment.id}</span>
                       </CardTitle>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                      <p className="text-xs sm:text-sm text-black/80 dark:text-white/80 truncate">
                         {shipment.destination}
                       </p>
                     </div>
@@ -194,42 +217,42 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
                       {getStatusText(shipment.status)}
                     </Badge>
                   </div>
+
+                  <div className="space-y-3 sm:space-y-4 mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-6 w-6 text-black dark:text-white flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-black/80 dark:text-white/80">Fecha</p>
+                          <p className="font-medium text-sm sm:text-base text-black dark:text-white">{shipment.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Weight className="h-6 w-6 text-black dark:text-white flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-black/80 dark:text-white/80">Peso Total</p>
+                          <p className="font-medium text-sm sm:text-base text-black dark:text-white">{shipment.totalWeight} kg</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs sm:text-sm font-medium text-black dark:text-white">Lotes incluidos:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {shipment.batches.map((batch, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {batch}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="text-xs sm:text-sm text-black/80 dark:text-white/80 space-y-1">
+                      <p className="truncate"><span className="font-medium text-black dark:text-white">Conductor:</span> {shipment.driver}</p>
+                      <p><span className="font-medium text-black dark:text-white">Vehículo:</span> {shipment.truck}</p>
+                    </div>
+                  </div>
                 </CardHeader>
-
-                <CardContent className="space-y-3 sm:space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-6 w-6 text-white flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Fecha</p>
-                        <p className="font-medium text-sm sm:text-base">{shipment.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Weight className="h-6 w-6 text-white flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Peso Total</p>
-                        <p className="font-medium text-sm sm:text-base">{shipment.totalWeight} kg</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-xs sm:text-sm font-medium">Lotes incluidos:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {shipment.batches.map((batch, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {batch}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-                    <p className="truncate"><span className="font-medium">Conductor:</span> {shipment.driver}</p>
-                    <p><span className="font-medium">Vehículo:</span> {shipment.truck}</p>
-                  </div>
-                </CardContent>
               </Card>
             ))}
           </div>
