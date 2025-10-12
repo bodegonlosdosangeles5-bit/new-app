@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RemitoProduction } from "@/components/RemitoProduction";
 
 interface Formula {
   id: string;
@@ -144,7 +145,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         <h2 className="text-xl sm:text-2xl font-bold text-black dark:text-white">Control de Producción</h2>
         <div className="flex items-center space-x-4">
           <div className="text-right">
-            <p className="text-xs sm:text-sm text-black/80 dark:text-white/80">Producción del mes</p>
+            <p className="text-xs sm:text-sm text-black/80 dark:text-white/80">Kilos por viaje</p>
             <p className="text-lg sm:text-2xl font-bold text-black dark:text-white">{monthlyProduction.toLocaleString()} kg</p>
           </div>
           <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
@@ -152,8 +153,9 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="current" className="text-xs sm:text-sm">Producción Actual</TabsTrigger>
+          <TabsTrigger value="remito" className="text-xs sm:text-sm">Remito Villa Martelli</TabsTrigger>
           <TabsTrigger value="shipments" className="text-xs sm:text-sm">Envíos</TabsTrigger>
         </TabsList>
 
@@ -209,6 +211,9 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
           )}
         </TabsContent>
 
+        <TabsContent value="remito" className="space-y-4">
+          <RemitoProduction productionItems={formulas} />
+        </TabsContent>
 
         <TabsContent value="shipments" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

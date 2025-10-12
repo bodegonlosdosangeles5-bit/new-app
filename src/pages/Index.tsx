@@ -7,6 +7,7 @@ import { ProductionSection } from "@/components/ProductionSection";
 import { TestTable } from "@/components/TestTable";
 import { FormulaTest } from "@/components/FormulaTest";
 import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
+import { Formula } from "@/services/formulaService";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -20,7 +21,8 @@ const Index = () => {
     updateFormula, 
     deleteFormula,
     addMissingIngredient,
-    removeMissingIngredient
+    removeMissingIngredient,
+    updateIncompleteFormulasStatus
   } = useRealtimeFormulas();
   
   // Logging para debug
@@ -44,11 +46,12 @@ const Index = () => {
           deleteFormula={deleteFormula}
           addMissingIngredient={addMissingIngredient}
           removeMissingIngredient={removeMissingIngredient}
+          updateIncompleteFormulasStatus={updateIncompleteFormulasStatus}
           loading={loading}
           error={error}
         />;
       case "production":
-        return <ProductionSection formulas={formulas} />;
+        return <ProductionSection formulas={formulas as Formula[]} />;
       case "test":
         return <TestTable />;
       case "formula-test":

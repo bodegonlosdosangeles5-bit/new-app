@@ -87,6 +87,26 @@ export const useFormulas = () => {
     }
   };
 
+  const updateIncompleteFormulasStatus = async () => {
+    try {
+      setError(null);
+      console.log('🔄 Actualizando fórmulas incompletas sin faltantes...');
+      const result = await FormulaService.updateIncompleteFormulasStatus();
+      
+      if (result.updated > 0) {
+        console.log(`✅ Se actualizaron ${result.updated} fórmulas a estado terminado`);
+        // Recargar todas las fórmulas para reflejar los cambios
+        await loadFormulas();
+      }
+      
+      return result;
+    } catch (err) {
+      setError('Error al actualizar fórmulas incompletas');
+      console.error('❌ Error actualizando fórmulas incompletas:', err);
+      throw err;
+    }
+  };
+
   return {
     formulas,
     loading,
@@ -94,6 +114,7 @@ export const useFormulas = () => {
     loadFormulas,
     createFormula,
     updateFormula,
-    deleteFormula
+    deleteFormula,
+    updateIncompleteFormulasStatus
   };
 };

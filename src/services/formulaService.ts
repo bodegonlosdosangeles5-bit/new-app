@@ -61,16 +61,28 @@ export class FormulaService {
         .select('formula_id, name, required, available, unit')
         .in('formula_id', formulaIds);
 
-      // Agrupar ingredientes por fórmula
+      // Agrupar ingredientes por fórmula, evitando duplicados
       const missingByFormula = (missingIngredients || []).reduce((acc, ingredient) => {
         if (!acc[ingredient.formula_id]) {
           acc[ingredient.formula_id] = [];
         }
-        acc[ingredient.formula_id].push({
-          name: ingredient.name,
-          required: parseFloat(ingredient.required.toString()),
-          unit: ingredient.unit
-        });
+        
+        // Verificar si el ingrediente ya existe para evitar duplicados
+        const existingIngredient = acc[ingredient.formula_id].find(
+          existing => existing.name === ingredient.name
+        );
+        
+        if (!existingIngredient) {
+          acc[ingredient.formula_id].push({
+            name: ingredient.name,
+            required: parseFloat(ingredient.required.toString()),
+            unit: ingredient.unit
+          });
+        } else {
+          // Si ya existe, sumar las cantidades requeridas
+          existingIngredient.required += parseFloat(ingredient.required.toString());
+        }
+        
         return acc;
       }, {} as Record<string, Array<{name: string, required: number, unit: string}>>);
 
@@ -242,6 +254,25 @@ export class FormulaService {
     unit: string;
   }): Promise<boolean> {
     try {
+      // Verificar si el ingrediente ya existe para esta fórmula
+      const { data: existingIngredient, error: checkError } = await supabase
+        .from('missing_ingredients')
+        .select('id')
+        .eq('formula_id', formulaId)
+        .eq('name', ingredient.name)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      // Si ya existe, no agregar duplicado
+      if (existingIngredient) {
+        console.log(`⚠️ Ingrediente "${ingredient.name}" ya existe para la fórmula ${formulaId}`);
+        return true; // Retornar true porque no es un error, solo no se duplicó
+      }
+
+      // Si no existe, agregarlo
       const { error } = await supabase
         .from('missing_ingredients')
         .insert({
@@ -289,6 +320,85 @@ export class FormulaService {
     } catch (error) {
       console.error('Error deleting formula:', error);
       return false;
+    }
+  }
+
+  // Actualizar automáticamente el estado de fórmulas incompletas sin faltantes
+  static async updateIncompleteFormulasStatus(): Promise<{ updated: number; formulas: Formula[] }> {
+    try {
+      console.log('🔄 Verificando fórmulas incompletas sin faltantes...');
+      
+      // Obtener todas las fórmulas con estado incomplete
+      const { data: incompleteFormulas, error: formulasError } = await supabase
+        .from('formulas')
+        .select('id, name, status')
+        .eq('status', 'incomplete');
+
+      if (formulasError) throw formulasError;
+
+      if (!incompleteFormulas || incompleteFormulas.length === 0) {
+        console.log('✅ No hay fórmulas incompletas para verificar');
+        return { updated: 0, formulas: [] };
+      }
+
+      const formulaIds = incompleteFormulas.map(f => f.id);
+      
+      // Obtener ingredientes faltantes para estas fórmulas
+      const { data: missingIngredients, error: missingError } = await supabase
+        .from('missing_ingredients')
+        .select('formula_id')
+        .in('formula_id', formulaIds);
+
+      if (missingError) throw missingError;
+
+      // Agrupar ingredientes faltantes por fórmula
+      const missingByFormula = (missingIngredients || []).reduce((acc, ingredient) => {
+        if (!acc[ingredient.formula_id]) {
+          acc[ingredient.formula_id] = [];
+        }
+        acc[ingredient.formula_id].push(ingredient);
+        return acc;
+      }, {} as Record<string, Array<{formula_id: string}>>);
+
+      // Encontrar fórmulas incompletas sin ingredientes faltantes
+      const formulasToUpdate = incompleteFormulas.filter(formula => 
+        !missingByFormula[formula.id] || missingByFormula[formula.id].length === 0
+      );
+
+      console.log(`🔍 Encontradas ${formulasToUpdate.length} fórmulas incompletas sin faltantes:`, 
+        formulasToUpdate.map(f => f.name));
+
+      if (formulasToUpdate.length === 0) {
+        console.log('✅ No hay fórmulas que actualizar');
+        return { updated: 0, formulas: [] };
+      }
+
+      // Actualizar el estado de estas fórmulas a 'available'
+      const formulaIdsToUpdate = formulasToUpdate.map(f => f.id);
+      
+      const { error: updateError } = await supabase
+        .from('formulas')
+        .update({ 
+          status: 'available',
+          updated_at: new Date().toISOString()
+        })
+        .in('id', formulaIdsToUpdate);
+
+      if (updateError) throw updateError;
+
+      console.log(`✅ Actualizadas ${formulasToUpdate.length} fórmulas a estado 'available'`);
+
+      // Obtener las fórmulas actualizadas con todos sus datos
+      const updatedFormulas = await this.getFormulas();
+      const updatedFormulasList = updatedFormulas.filter(f => formulaIdsToUpdate.includes(f.id));
+
+      return { 
+        updated: formulasToUpdate.length, 
+        formulas: updatedFormulasList 
+      };
+    } catch (error) {
+      console.error('❌ Error actualizando fórmulas incompletas:', error);
+      return { updated: 0, formulas: [] };
     }
   }
 }

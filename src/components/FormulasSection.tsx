@@ -19,6 +19,7 @@ interface FormulasSectionProps {
   deleteFormula?: (id: string) => Promise<boolean>;
   addMissingIngredient?: (formulaId: string, ingredient: { name: string; required: number; unit: string; }) => Promise<boolean>;
   removeMissingIngredient?: (formulaId: string, ingredientName: string) => Promise<boolean>;
+  updateIncompleteFormulasStatus?: () => Promise<{ updated: number; formulas: any[] }>;
   loading?: boolean;
   error?: string | null;
 }
@@ -31,6 +32,7 @@ export const FormulasSection = ({
   deleteFormula,
   addMissingIngredient,
   removeMissingIngredient,
+  updateIncompleteFormulasStatus,
   loading = false,
   error = null
 }: FormulasSectionProps) => {
@@ -69,6 +71,7 @@ export const FormulasSection = ({
     required: "",
     unit: "kg"
   });
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Usar las fórmulas pasadas como prop
   const currentFormulas = formulas;
@@ -141,6 +144,30 @@ export const FormulasSection = ({
     const destinationMatch = destinationFilter === "all" || formula.destination === destinationFilter;
     return statusMatch && destinationMatch;
   });
+
+  // Función para actualizar automáticamente fórmulas incompletas sin faltantes
+  const handleUpdateIncompleteFormulas = async () => {
+    if (!updateIncompleteFormulasStatus) return;
+    
+    try {
+      setIsUpdatingStatus(true);
+      const result = await updateIncompleteFormulasStatus();
+      
+      if (result.updated > 0) {
+        setShowSuccessMessage(`✅ Se actualizaron ${result.updated} fórmulas a estado terminado`);
+        setTimeout(() => setShowSuccessMessage(null), 5000);
+      } else {
+        setShowSuccessMessage("ℹ️ No hay fórmulas incompletas sin faltantes para actualizar");
+        setTimeout(() => setShowSuccessMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error actualizando fórmulas:', error);
+      setShowSuccessMessage("❌ Error al actualizar fórmulas");
+      setTimeout(() => setShowSuccessMessage(null), 5000);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
 
 
@@ -346,49 +373,27 @@ export const FormulasSection = ({
         ing => ing.name !== ingredientName
       ) || [];
       
-      // Actualizar el estado local inmediatamente para mejor UX
-      setFormulas((prevFormulas: any[]) => 
-        prevFormulas.map((formula: any) => {
-          if (formula.id === formulaId) {
-            const updatedMissingIngredients = formula.missingIngredients?.filter(
-              ing => ing.name !== ingredientName
-            ) || [];
-            
-            // Si no quedan ingredientes faltantes, cambiar el estado a "available"
-            if (updatedMissingIngredients.length === 0) {
-              console.log('🎉 No quedan ingredientes faltantes, cambiando estado a "available"');
-              
-              // Agregar animación de cambio de estado
-              setStatusChangingFormulas(prev => new Set(prev).add(formulaId));
-              
-              // Mostrar mensaje de éxito
-              setShowSuccessMessage(`¡Fórmula "${formula.name}" completada! Ahora está TERMINADA ✅`);
-              
-              // Quitar la animación y mensaje después de 3 segundos
-              setTimeout(() => {
-                setStatusChangingFormulas(prev => {
-                  const newSet = new Set(prev);
-                  newSet.delete(formulaId);
-                  return newSet;
-                });
-                setShowSuccessMessage(null);
-              }, 3000);
-              
-              return {
-                ...formula,
-                missingIngredients: [],
-                status: 'available'
-              };
-            }
-            
-            return {
-              ...formula,
-              missingIngredients: updatedMissingIngredients
-            };
-          }
-          return formula;
-        })
-      );
+      // El estado se actualizará automáticamente via Realtime
+      // Si no quedan ingredientes faltantes, cambiar el estado a "available"
+      if (remainingIngredients.length === 0) {
+        console.log('🎉 No quedan ingredientes faltantes, cambiando estado a "available"');
+        
+        // Agregar animación de cambio de estado
+        setStatusChangingFormulas(prev => new Set(prev).add(formulaId));
+        
+        // Mostrar mensaje de éxito
+        setShowSuccessMessage(`¡Fórmula completada! Ahora está TERMINADA ✅`);
+        
+        // Quitar la animación y mensaje después de 3 segundos
+        setTimeout(() => {
+          setStatusChangingFormulas(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(formulaId);
+            return newSet;
+          });
+          setShowSuccessMessage(null);
+        }, 3000);
+      }
 
       // Ejecutar la eliminación en la base de datos
       if (removeMissingIngredient) {
@@ -417,17 +422,7 @@ export const FormulasSection = ({
       }
     } catch (error) {
       console.error('❌ Error eliminando ingrediente:', error);
-      // Revertir el cambio local si hay error
-      setFormulas((prevFormulas: any[]) => 
-        prevFormulas.map((formula: any) => {
-          if (formula.id === formulaId) {
-            // Restaurar el ingrediente eliminado
-            const originalFormula = formulas.find(f => f.id === formulaId);
-            return originalFormula || formula;
-          }
-          return formula;
-        })
-      );
+      // El estado se actualizará automáticamente via Realtime
     }
   };
 
@@ -457,6 +452,16 @@ export const FormulasSection = ({
             >
               <Filter className="h-4 w-4" />
               {showOnlyIncomplete ? "Mostrar Todas" : "Solo Incompletas"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleUpdateIncompleteFormulas}
+              disabled={isUpdatingStatus}
+              className="flex items-center gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              {isUpdatingStatus ? "Actualizando..." : "Actualizar Completadas"}
             </Button>
             <Select value={destinationFilter} onValueChange={setDestinationFilter}>
               <SelectTrigger className="w-[180px]">
@@ -572,7 +577,7 @@ export const FormulasSection = ({
                     {formula.missingIngredients && formula.missingIngredients.length > 0 ? (
                       <div className="space-y-2 max-h-96 overflow-y-auto">
                         {formula.missingIngredients.map((ingredient: any, index: number) => (
-                          <div key={`${formula.id}-${ingredient.name}-${index}`} className="group flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-colors">
+                          <div key={`${formula.id}-${ingredient.name}-${ingredient.required}-${index}`} className="group flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-colors">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Package className="h-4 w-4 text-red-400 flex-shrink-0" />
@@ -1042,7 +1047,7 @@ export const FormulasSection = ({
                     <h5 className="font-medium text-sm text-red-700">Materias primas faltantes agregadas:</h5>
                     <div className="space-y-1 max-h-32 overflow-y-auto">
                       {missingIngredients.map((ingredient, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-white border border-red-200 rounded">
+                        <div key={`${ingredient.name}-${ingredient.required}-${index}`} className="flex items-center justify-between p-2 bg-white border border-red-200 rounded">
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-red-500" />
                             <span className="text-sm font-medium">{ingredient.name}</span>

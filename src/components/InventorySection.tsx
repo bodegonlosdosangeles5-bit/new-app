@@ -7,12 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useRealtimeInventory } from "@/hooks/useRealtimeInventory";
+import { InventoryItem } from "@/services/inventoryService";
 
 export const InventorySection = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [newItem, setNewItem] = useState({
     name: "",
     certificate: "",
@@ -21,98 +23,21 @@ export const InventorySection = () => {
     level: "",
     currentStock: "",
     category: "Aceites Esenciales",
-    minStock: 5,
-    maxStock: 25,
-    unit: "kg",
+    minStock: 5000, // 5kg en gramos
+    maxStock: 25000, // 25kg en gramos
+    unit: "g", // Gramos por defecto
     status: "normal"
   });
-  const [inventoryItems, setInventoryItems] = useState([
-    {
-      id: "MP001",
-      name: "Aceite Esencial de Lavanda",
-      category: "Aceites Esenciales",
-      currentStock: 25.5,
-      minStock: 10,
-      maxStock: 50,
-      unit: "kg",
-      location: "A-12-3",
-      supplier: "Aromática Premium",
-      lastUpdate: "2024-01-15",
-      status: "normal",
-      certificate: "CERT-001-2024",
-      rack: "A",
-      place: "12",
-      level: "3",
-    },
-    {
-      id: "MP002",
-      name: "Alcohol Etílico 96°",
-      category: "Solventes",
-      currentStock: 180,
-      minStock: 100,
-      maxStock: 300,
-      unit: "L",
-      location: "B-05-1",
-      supplier: "QuimCorp",
-      lastUpdate: "2024-01-14",
-      status: "normal",
-      certificate: "CERT-002-2024",
-      rack: "B",
-      place: "05",
-      level: "1",
-    },
-    {
-      id: "MP003",
-      name: "Aceite de Rosa Búlgara",
-      category: "Aceites Esenciales",
-      currentStock: 5.2,
-      minStock: 8,
-      maxStock: 20,
-      unit: "kg",
-      location: "A-15-2",
-      supplier: "Bulgarian Rose Co.",
-      lastUpdate: "2024-01-13",
-      status: "low",
-      certificate: "CERT-003-2024",
-      rack: "A",
-      place: "15",
-      level: "2",
-    },
-    {
-      id: "MP004",
-      name: "Benzilacetato",
-      category: "Químicos Aromáticos",
-      currentStock: 12.8,
-      minStock: 5,
-      maxStock: 25,
-      unit: "kg",
-      location: "C-08-4",
-      supplier: "AromaChems Ltd",
-      lastUpdate: "2024-01-12",
-      status: "normal",
-      certificate: "CERT-004-2024",
-      rack: "C",
-      place: "08",
-      level: "4",
-    },
-    {
-      id: "MP005",
-      name: "Linalool Sintético",
-      category: "Químicos Aromáticos",
-      currentStock: 2.1,
-      minStock: 5,
-      maxStock: 15,
-      unit: "kg",
-      location: "C-12-1",
-      supplier: "SyntheticAromas",
-      lastUpdate: "2024-01-11",
-      status: "critical",
-      certificate: "CERT-005-2024",
-      rack: "C",
-      place: "12",
-      level: "1",
-    },
-  ]);
+
+  // Usar el hook de Realtime para manejar las materias primas
+  const { 
+    inventoryItems, 
+    loading, 
+    error, 
+    createInventoryItem, 
+    updateInventoryItem, 
+    deleteInventoryItem 
+  } = useRealtimeInventory();
 
   const filteredItems = inventoryItems.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,26 +65,45 @@ export const InventorySection = () => {
     return Math.round((current / max) * 100);
   };
 
-  const handleEditItem = (item: any) => {
+  // Función para convertir gramos a kilogramos para mostrar
+  const convertToDisplayUnit = (value: number, unit: string) => {
+    if (unit === 'g' && value >= 1000) {
+      return `${(value / 1000).toFixed(2)} kg`;
+    }
+    return `${value} ${unit}`;
+  };
+
+  // Función para convertir de kilogramos a gramos para guardar
+  const convertToStorageUnit = (value: number, unit: string) => {
+    if (unit === 'kg') {
+      return value * 1000;
+    }
+    return value;
+  };
+
+  // Función para obtener la unidad de almacenamiento (siempre gramos)
+  const getStorageUnit = (displayUnit: string) => {
+    return 'g';
+  };
+
+  const handleEditItem = (item: InventoryItem) => {
     setEditingItem({ ...item });
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingItem) {
-      setInventoryItems(prevItems =>
-        prevItems.map(item =>
-          item.id === editingItem.id
-            ? {
-                ...editingItem,
-                location: `${editingItem.rack}-${editingItem.place}-${editingItem.level}`,
-                lastUpdate: new Date().toISOString().split('T')[0],
-              }
-            : item
-        )
-      );
-      setIsEditModalOpen(false);
-      setEditingItem(null);
+      try {
+        const updates = {
+          ...editingItem,
+          location: `${editingItem.rack}-${editingItem.place}-${editingItem.level}`,
+        };
+        await updateInventoryItem(editingItem.id, updates);
+        setIsEditModalOpen(false);
+        setEditingItem(null);
+      } catch (error) {
+        console.error('Error actualizando materia prima:', error);
+      }
     }
   };
 
@@ -186,59 +130,56 @@ export const InventorySection = () => {
       level: "",
       currentStock: "",
       category: "Aceites Esenciales",
-      minStock: 5,
-      maxStock: 25,
-      unit: "kg",
+      minStock: 5000, // 5kg en gramos
+      maxStock: 25000, // 25kg en gramos
+      unit: "g", // Gramos por defecto
       status: "normal"
     });
     setIsAddModalOpen(true);
   };
 
-  const handleSaveNewItem = () => {
+  const handleSaveNewItem = async () => {
     if (newItem.name && newItem.certificate && newItem.rack && newItem.place && newItem.level && newItem.currentStock) {
-      const newId = `MP${String(inventoryItems.length + 1).padStart(3, '0')}`;
-      const stockValue = parseFloat(newItem.currentStock);
-      
-      // Determinar el estado basado en el stock
-      let status = "normal";
-      if (stockValue <= newItem.minStock * 0.5) {
-        status = "critical";
-      } else if (stockValue <= newItem.minStock) {
-        status = "low";
+      try {
+        const stockValue = parseFloat(newItem.currentStock);
+        
+        // Convertir a gramos para almacenamiento
+        const currentStockInGrams = convertToStorageUnit(stockValue, newItem.unit);
+        const minStockInGrams = convertToStorageUnit(newItem.minStock, newItem.unit);
+        const maxStockInGrams = convertToStorageUnit(newItem.maxStock, newItem.unit);
+        
+        const itemToAdd = {
+          name: newItem.name,
+          category: newItem.category,
+          currentStock: currentStockInGrams,
+          minStock: minStockInGrams,
+          maxStock: maxStockInGrams,
+          unit: 'g', // Siempre almacenar en gramos
+          location: `${newItem.rack}-${newItem.place}-${newItem.level}`,
+          certificate: newItem.certificate,
+          rack: newItem.rack,
+          place: newItem.place,
+          level: newItem.level,
+        };
+
+        await createInventoryItem(itemToAdd);
+        setIsAddModalOpen(false);
+        setNewItem({
+          name: "",
+          certificate: "",
+          rack: "",
+          place: "",
+          level: "",
+          currentStock: "",
+          category: "Aceites Esenciales",
+          minStock: 5000, // 5kg en gramos
+          maxStock: 25000, // 25kg en gramos
+          unit: "g", // Gramos por defecto
+          status: "normal"
+        });
+      } catch (error) {
+        console.error('Error creando materia prima:', error);
       }
-
-      const itemToAdd = {
-        id: newId,
-        name: newItem.name,
-        category: newItem.category,
-        currentStock: stockValue,
-        minStock: newItem.minStock,
-        maxStock: newItem.maxStock,
-        unit: newItem.unit,
-        location: `${newItem.rack}-${newItem.place}-${newItem.level}`,
-        lastUpdate: new Date().toISOString().split('T')[0],
-        status: status,
-        certificate: newItem.certificate,
-        rack: newItem.rack,
-        place: newItem.place,
-        level: newItem.level,
-      };
-
-      setInventoryItems(prevItems => [...prevItems, itemToAdd]);
-      setIsAddModalOpen(false);
-      setNewItem({
-        name: "",
-        certificate: "",
-        rack: "",
-        place: "",
-        level: "",
-        currentStock: "",
-        category: "Aceites Esenciales",
-        minStock: 5,
-        maxStock: 25,
-        unit: "kg",
-        status: "normal"
-      });
     }
   };
 
@@ -252,9 +193,9 @@ export const InventorySection = () => {
       level: "",
       currentStock: "",
       category: "Aceites Esenciales",
-      minStock: 5,
-      maxStock: 25,
-      unit: "kg",
+      minStock: 5000, // 5kg en gramos
+      maxStock: 25000, // 25kg en gramos
+      unit: "g", // Gramos por defecto
       status: "normal"
     });
   };
@@ -287,8 +228,37 @@ export const InventorySection = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredItems.map((item) => (
+      {/* Indicadores de estado */}
+      {loading && (
+        <div className="text-center py-8">
+          <div className="text-muted-foreground">Cargando materias primas...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-center py-8 text-destructive">
+          <div>Error: {error}</div>
+        </div>
+      )}
+
+      {!loading && !error && filteredItems.length === 0 && (
+        <div className="text-center py-12">
+          <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            {searchTerm ? "No se encontraron materias primas" : "No hay materias primas"}
+          </h3>
+          <p className="text-muted-foreground">
+            {searchTerm 
+              ? "Intenta con otros términos de búsqueda." 
+              : "Agrega tu primera materia prima para comenzar."
+            }
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && filteredItems.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {filteredItems.map((item) => (
           <Card key={item.id} className="card-elegant hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2">
@@ -327,14 +297,14 @@ export const InventorySection = () => {
                   <span className="text-xs sm:text-sm font-medium">Stock Actual</span>
                 </div>
                 <span className="text-base sm:text-lg font-bold text-foreground">
-                  {item.currentStock} {item.unit}
+                  {convertToDisplayUnit(item.currentStock, item.unit)}
                 </span>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Min: {item.minStock} {item.unit}</span>
-                  <span>Max: {item.maxStock} {item.unit}</span>
+                  <span>Min: {convertToDisplayUnit(item.minStock, item.unit)}</span>
+                  <span>Max: {convertToDisplayUnit(item.maxStock, item.unit)}</span>
                 </div>
                 <Progress 
                   value={getStockPercentage(item.currentStock, item.minStock, item.maxStock)} 
@@ -361,7 +331,8 @@ export const InventorySection = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Modal de Edición */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -422,16 +393,42 @@ export const InventorySection = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="currentStock">Cantidad (kg)</Label>
-                <Input
-                  id="currentStock"
-                  type="number"
-                  step="0.1"
-                  value={editingItem.currentStock}
-                  onChange={(e) => handleInputChange('currentStock', e.target.value)}
-                  placeholder="25.5"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentStock">Cantidad</Label>
+                  <Input
+                    id="currentStock"
+                    type="number"
+                    step="0.1"
+                    value={editingItem.unit === 'g' && editingItem.currentStock >= 1000 ? 
+                      (editingItem.currentStock / 1000).toFixed(2) : 
+                      editingItem.currentStock.toString()}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      const convertedValue = editingItem.unit === 'g' && value < 1000 ? value : value * 1000;
+                      handleInputChange('currentStock', convertedValue.toString());
+                    }}
+                    placeholder="25.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unit">Unidad</Label>
+                  <select
+                    id="unit"
+                    value={editingItem.unit === 'g' && editingItem.currentStock >= 1000 ? 'kg' : editingItem.unit}
+                    onChange={(e) => {
+                      const newUnit = e.target.value;
+                      const currentValue = editingItem.currentStock;
+                      const convertedValue = newUnit === 'kg' ? currentValue / 1000 : currentValue * 1000;
+                      handleInputChange('unit', newUnit === 'kg' ? 'g' : 'g');
+                      handleInputChange('currentStock', convertedValue.toString());
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="g">Gramos (g)</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
@@ -507,16 +504,63 @@ export const InventorySection = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="new-currentStock">Cantidad (kg)</Label>
-              <Input
-                id="new-currentStock"
-                type="number"
-                step="0.1"
-                value={newItem.currentStock}
-                onChange={(e) => handleNewItemInputChange('currentStock', e.target.value)}
-                placeholder="25.5"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-currentStock">Cantidad</Label>
+                <Input
+                  id="new-currentStock"
+                  type="number"
+                  step="0.1"
+                  value={newItem.currentStock}
+                  onChange={(e) => handleNewItemInputChange('currentStock', e.target.value)}
+                  placeholder="25000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-unit">Unidad</Label>
+                <select
+                  id="new-unit"
+                  value={newItem.unit}
+                  onChange={(e) => handleNewItemInputChange('unit', e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="g">Gramos (g)</option>
+                  <option value="kg">Kilogramos (kg)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-minStock">Stock Mínimo</Label>
+                <Input
+                  id="new-minStock"
+                  type="number"
+                  step="0.1"
+                  value={newItem.unit === 'kg' ? (newItem.minStock / 1000).toString() : newItem.minStock.toString()}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    const convertedValue = newItem.unit === 'kg' ? value * 1000 : value;
+                    handleNewItemInputChange('minStock', convertedValue.toString());
+                  }}
+                  placeholder={newItem.unit === 'kg' ? "5" : "5000"}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-maxStock">Stock Máximo</Label>
+                <Input
+                  id="new-maxStock"
+                  type="number"
+                  step="0.1"
+                  value={newItem.unit === 'kg' ? (newItem.maxStock / 1000).toString() : newItem.maxStock.toString()}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    const convertedValue = newItem.unit === 'kg' ? value * 1000 : value;
+                    handleNewItemInputChange('maxStock', convertedValue.toString());
+                  }}
+                  placeholder={newItem.unit === 'kg' ? "25" : "25000"}
+                />
+              </div>
             </div>
           </div>
 
