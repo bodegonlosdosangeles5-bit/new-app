@@ -31,14 +31,16 @@ export const useFormulas = () => {
     try {
       setError(null);
       console.log('🔄 Creando fórmula en hook useFormulas...');
+      console.log('📝 Datos de la fórmula a crear:', formula);
+      
       const newFormula = await FormulaService.createFormula(formula);
+      console.log('📊 Fórmula creada desde servicio:', newFormula);
+      
       if (newFormula) {
-        console.log('✅ Fórmula creada, actualizando estado local:', newFormula);
-        setFormulas(prev => {
-          const updated = [newFormula, ...prev];
-          console.log('📋 Estado actualizado de fórmulas:', updated);
-          return updated;
-        });
+        console.log('✅ Fórmula creada, recargando lista completa...');
+        // Recargar todas las fórmulas desde la base de datos
+        await loadFormulas();
+        console.log('🎉 Lista de fórmulas recargada exitosamente');
         return newFormula;
       }
       throw new Error('Error al crear la fórmula');

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlaskConical, CheckCircle, XCircle, Clock, Beaker, Plus, Filter, Edit, Save, X } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Beaker, Filter, Edit, Save, X, Plus, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface FormulasSectionProps {
   formulas: any[];
@@ -30,33 +30,45 @@ export const FormulasSection = ({
   error = null
 }: FormulasSectionProps) => {
   const [selectedFormula, setSelectedFormula] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingFormula, setEditingFormula] = useState<any>(null);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(true);
   const [destinationFilter, setDestinationFilter] = useState<string>("all");
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
   const [newFormula, setNewFormula] = useState({
-    id: "",
     lot: "",
     name: "",
     batchSize: "",
-    destination: "Villa Martelli", // Valor por defecto para stock
     date: "",
-    type: "stock", // "stock" o "client"
-    clientName: "",
-    status: "available", // Campo de estatus
-    missingIngredients: [{ name: "", required: "", unit: "" }]
+    status: "available",
+    type: "uso_interno",
+    clientName: ""
   });
 
   // Usar las fórmulas pasadas como prop
   const currentFormulas = formulas;
+  
+  // Logging para debug
+  console.log('📋 FormulasSection - Props recibidas:', { 
+    formulasCount: formulas.length, 
+    loading, 
+    error,
+    formulas: formulas.map(f => ({ id: f.id, name: f.name, status: f.status }))
+  });
 
 
-  const getFormulaStatus = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
-    const missingIngredients = formula.ingredients.filter(
-      (ing: { available: number; required: number }) => ing.available < ing.required
-    );
-    return missingIngredients.length === 0 ? "available" : "incomplete";
+  const getFormulaStatus = (formula: any) => {
+    // Si la fórmula ya tiene un status definido, usarlo
+    if (formula.status) {
+      return formula.status;
+    }
+    
+    // Si no tiene status, calcular basado en ingredientes faltantes
+    if (formula.missingIngredients && formula.missingIngredients.length > 0) {
+      return "incomplete";
+    }
+    
+    return "available";
   };
 
   const getStatusIcon = (status: string) => {
@@ -81,11 +93,14 @@ export const FormulasSection = ({
     }
   };
 
-  const getCompletionPercentage = (formula: { ingredients: Array<{ available: number; required: number }> }) => {
-    const availableCount = formula.ingredients.filter(
-      (ing: { available: number; required: number }) => ing.available >= ing.required
-    ).length;
-    return Math.round((availableCount / formula.ingredients.length) * 100);
+  const getCompletionPercentage = (formula: any) => {
+    // Si no hay ingredientes faltantes, está 100% completa
+    if (!formula.missingIngredients || formula.missingIngredients.length === 0) {
+      return 100;
+    }
+    
+    // Si hay ingredientes faltantes, está incompleta
+    return 0;
   };
 
   // Filtrar fórmulas según el estado y destino seleccionado
@@ -96,6 +111,8 @@ export const FormulasSection = ({
     return statusMatch && destinationMatch;
   });
 
+
+
   const handleInputChange = (field: string, value: string) => {
     setNewFormula(prev => ({
       ...prev,
@@ -103,119 +120,47 @@ export const FormulasSection = ({
     }));
   };
 
-  const handleAllMateriaChange = (index: number, field: string, value: string) => {
-    setNewFormula(prev => ({
-      ...prev,
-      allMaterias: prev.allMaterias.map((ing, i) => 
-        i === index ? { ...ing, [field]: value } : ing
-      )
-    }));
-  };
-
-  const addAllMateria = () => {
-    setNewFormula(prev => ({
-      ...prev,
-      allMaterias: [...prev.allMaterias, { name: "", required: "", available: "", unit: "" }]
-    }));
-  };
-
-  const removeAllMateria = (index: number) => {
-    setNewFormula(prev => ({
-      ...prev,
-      allMaterias: prev.allMaterias.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleMissingIngredientChange = (index: number, field: string, value: string) => {
-    setNewFormula(prev => ({
-      ...prev,
-      missingIngredients: prev.missingIngredients.map((ing, i) => 
-        i === index ? { ...ing, [field]: value } : ing
-      )
-    }));
-  };
-
-  const addMissingIngredient = () => {
-    setNewFormula(prev => ({
-      ...prev,
-      missingIngredients: [...prev.missingIngredients, { name: "", required: "", unit: "" }]
-    }));
-  };
-
-  const removeMissingIngredient = (index: number) => {
-    setNewFormula(prev => ({
-      ...prev,
-      missingIngredients: prev.missingIngredients.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoadFormula = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Solo usar materias primas faltantes
-    const missingIngredients = newFormula.missingIngredients.map(ing => ({
-      name: ing.name,
-      required: parseFloat(ing.required),
-      available: 0, // Los faltantes no tienen disponible
-      unit: ing.unit
-    }));
-    
-    // Determinar el estado basado en si hay materias faltantes
-    const hasMissingIngredients = missingIngredients.length > 0;
-    const status = hasMissingIngredients ? "incomplete" : "available";
-    
     if (!createFormula) {
-      // Fallback al método local si no hay createFormula
-      const formulaToAdd = {
-        ...newFormula,
-        id: newFormula.lot, // Usar el lote como ID
-        batchSize: parseInt(newFormula.batchSize),
-        status: status,
-        date: newFormula.date,
-        type: newFormula.type,
-        clientName: newFormula.type === "client" ? newFormula.clientName : "",
-        ingredients: missingIngredients
-      };
-      
-      setFormulas([...currentFormulas, formulaToAdd]);
-    } else {
-      // Usar Supabase
-      try {
-        // Lógica automática: Stock = Villa Martelli, Cliente = Florencio Varela
-        const autoDestination = newFormula.type === 'stock' ? 'Villa Martelli' : 'Florencio Varela';
-        
-        const formulaData = {
-          name: newFormula.name,
-          batchSize: parseInt(newFormula.batchSize),
-          destination: autoDestination, // Destino automático
-          date: newFormula.date,
-          type: newFormula.type,
-          clientName: newFormula.type === "client" ? newFormula.clientName : "",
-          missingIngredients: missingIngredients,
-          status: newFormula.status // Usar el estatus seleccionado
-        };
-
-        await createFormula(formulaData);
-      } catch (error) {
-        console.error('Error creating formula:', error);
-        return;
-      }
+      console.error('No hay función createFormula disponible');
+      return;
     }
-    
-    setIsModalOpen(false);
-    // Resetear el formulario
-    setNewFormula({
-      id: "",
-      lot: "",
-      name: "",
-      batchSize: "",
-      destination: "Villa Martelli", // Reset con valor por defecto
-      date: "",
-      type: "stock",
-      clientName: "",
-      status: "available", // Reset con valor por defecto
-      missingIngredients: [{ name: "", required: "", unit: "" }]
-    });
+
+    try {
+      // Lógica automática: Uso interno = Florencio Varela, Todo lo demás = Villa Martelli
+      const autoDestination = newFormula.type === 'uso_interno' ? 'Florencio Varela' : 'Villa Martelli';
+      
+      const formulaData = {
+        name: newFormula.name,
+        batchSize: parseInt(newFormula.batchSize),
+        destination: autoDestination,
+        date: newFormula.date,
+        type: newFormula.type === 'uso_interno' ? 'stock' : 'client',
+        clientName: newFormula.type === 'cliente' ? newFormula.clientName : '',
+        status: newFormula.status,
+        missingIngredients: [],
+        id: newFormula.lot // Usar el lote como ID
+      };
+
+      await createFormula(formulaData);
+      
+      // Resetear el formulario
+      setNewFormula({
+        lot: "",
+        name: "",
+        batchSize: "",
+        date: "",
+        status: "available",
+        type: "uso_interno",
+        clientName: ""
+      });
+      
+      setIsLoadModalOpen(false);
+    } catch (error) {
+      console.error('Error creating formula:', error);
+    }
   };
 
   const handleEditFormula = (formula: any) => {
@@ -275,11 +220,11 @@ export const FormulasSection = ({
           </div>
         </div>
         <Button 
-          className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsLoadModalOpen(true)}
+          className="bg-green-600 hover:bg-green-700 text-white text-base font-medium px-6 py-2"
         >
-          <FlaskConical className="h-6 w-6 mr-2" />
-          Nueva Fórmula
+          <Upload className="h-4 w-4 mr-2" />
+          Cargar Fórmula
         </Button>
       </div>
 
@@ -342,35 +287,25 @@ export const FormulasSection = ({
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {actualStatus === "incomplete" && (
+                {actualStatus === "incomplete" && formula.missingIngredients && formula.missingIngredients.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="text-base font-medium text-white flex items-center gap-2">
                       <XCircle className="h-4 w-4" />
                       Materias Primas Faltantes:
                     </h4>
                     <div className="space-y-2">
-                      {formula.ingredients
-                        .filter(ingredient => ingredient.available < ingredient.required)
-                        .map((ingredient, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20">
-                            <div className="flex-1">
-                              <p className="text-base font-medium text-white">
-                                {ingredient.name}
-                              </p>
-                              <p className="text-base text-white">
-                                Necesario: {ingredient.required} {ingredient.unit}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-base font-medium text-white">
-                                Disponible: {ingredient.available} {ingredient.unit}
-                              </p>
-                              <p className="text-base text-white font-semibold">
-                                Faltan: {ingredient.required - ingredient.available} {ingredient.unit}
-                              </p>
-                            </div>
+                      {formula.missingIngredients.map((ingredient: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                          <div className="flex-1">
+                            <p className="text-base font-medium text-white">
+                              {ingredient.name}
+                            </p>
+                            <p className="text-base text-white">
+                              Necesario: {ingredient.required} {ingredient.unit}
+                            </p>
                           </div>
-                        ))}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -402,206 +337,6 @@ export const FormulasSection = ({
         </div>
       )}
 
-      {/* Modal para nueva fórmula */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold">Crear Nueva Fórmula</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lot">Lote del Producto</Label>
-                <Input
-                  id="lot"
-                  value={newFormula.lot}
-                  onChange={(e) => handleInputChange("lot", e.target.value)}
-                  placeholder="Ej: L-2024-089"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre del Producto</Label>
-                <Input
-                  id="name"
-                  value={newFormula.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Ej: Lavanda Premium"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="batchSize">Cantidad en Kilogramos</Label>
-                <Input
-                  id="batchSize"
-                  type="number"
-                  value={newFormula.batchSize}
-                  onChange={(e) => handleInputChange("batchSize", e.target.value)}
-                  placeholder="50"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="destination">Destino</Label>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-medium">
-                    {newFormula.type === 'stock' ? 'Villa Martelli' : 'Florencio Varela'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {newFormula.type === 'stock' 
-                      ? 'Stock → Villa Martelli (automático)' 
-                      : 'Cliente → Florencio Varela (automático)'
-                    }
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="date">Fecha</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={newFormula.date}
-                  onChange={(e) => handleInputChange("date", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Para</Label>
-                <Select value={newFormula.type} onValueChange={(value) => handleInputChange("type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar para" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stock">Stock</SelectItem>
-                    <SelectItem value="client">Cliente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="status">Estatus</Label>
-                <Select value={newFormula.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estatus" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="available">Terminada</SelectItem>
-                    <SelectItem value="incomplete">Incompleta (Faltan materias primas)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="clientName">Nombre del Cliente</Label>
-                <Input
-                  id="clientName"
-                  value={newFormula.clientName}
-                  onChange={(e) => handleInputChange("clientName", e.target.value)}
-                  placeholder={newFormula.type === "client" ? "Nombre del cliente" : "Solo para clientes"}
-                  disabled={newFormula.type === "stock"}
-                  required={newFormula.type === "client"}
-                />
-              </div>
-            </div>
-
-            {/* Materias Primas Faltantes */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <Label className="text-sm sm:text-base font-semibold">Materias Primas Faltantes (Opcional)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addMissingIngredient}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4" />
-                  Agregar Materia Prima Faltante
-                </Button>
-              </div>
-
-              {newFormula.missingIngredients.map((ingredient, index) => (
-                <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 sm:p-4 border rounded-lg bg-red-50">
-                  <div className="space-y-1">
-                    <Label>Nombre de la Materia Prima</Label>
-                    <Input
-                      value={ingredient.name}
-                      onChange={(e) => handleMissingIngredientChange(index, "name", e.target.value)}
-                      placeholder="Ej: Aceite de Rosa Búlgara"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label>Cantidad Faltante</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={ingredient.required}
-                      onChange={(e) => handleMissingIngredientChange(index, "required", e.target.value)}
-                      placeholder="5.2"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label>Unidad</Label>
-                    <Select value={ingredient.unit} onValueChange={(value) => handleMissingIngredientChange(index, "unit", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Unidad" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kg">kg</SelectItem>
-                        <SelectItem value="L">L</SelectItem>
-                        <SelectItem value="ml">ml</SelectItem>
-                        <SelectItem value="g">g</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {newFormula.missingIngredients.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeMissingIngredient(index)}
-                      className="mt-4 sm:mt-6 w-full sm:w-auto sm:col-span-3"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                className="w-full sm:w-auto order-2 sm:order-1"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto order-1 sm:order-2"
-              >
-                Crear Fórmula
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Modal para editar fórmula */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -819,6 +554,137 @@ export const FormulasSection = ({
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para cargar fórmula */}
+      <Dialog open={isLoadModalOpen} onOpenChange={setIsLoadModalOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl font-bold">Cargar Nueva Fórmula</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleLoadFormula} className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lot">Lote del Producto</Label>
+                <Input
+                  id="lot"
+                  value={newFormula.lot}
+                  onChange={(e) => handleInputChange("lot", e.target.value)}
+                  placeholder="Ej: L-2024-089"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre del Producto</Label>
+                <Input
+                  id="name"
+                  value={newFormula.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Ej: Lavanda Premium"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="batchSize">Cantidad en Kilogramos</Label>
+                <Input
+                  id="batchSize"
+                  type="number"
+                  value={newFormula.batchSize}
+                  onChange={(e) => handleInputChange("batchSize", e.target.value)}
+                  placeholder="50"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="date">Fecha</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newFormula.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Estatus</Label>
+                <Select value={newFormula.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estatus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Terminada</SelectItem>
+                    <SelectItem value="incomplete">Incompleta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="type">Tipo de Fórmula</Label>
+                <Select value={newFormula.type} onValueChange={(value) => handleInputChange("type", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="uso_interno">Uso Interno (Florencio Varela)</SelectItem>
+                    <SelectItem value="stock">Stock (Villa Martelli)</SelectItem>
+                    <SelectItem value="cliente">Cliente (Villa Martelli)</SelectItem>
+                    <SelectItem value="exportacion">Exportación (Villa Martelli)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {newFormula.type === 'cliente' && (
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Nombre del Cliente</Label>
+                <Input
+                  id="clientName"
+                  value={newFormula.clientName}
+                  onChange={(e) => handleInputChange("clientName", e.target.value)}
+                  placeholder="Nombre del cliente"
+                  required
+                />
+              </div>
+            )}
+
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Destino Automático:</h4>
+              <p className="text-sm text-muted-foreground">
+                {newFormula.type === 'uso_interno' 
+                  ? 'Uso Interno → Florencio Varela (automático)'
+                  : 'Stock/Cliente/Exportación → Villa Martelli (automático)'
+                }
+              </p>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsLoadModalOpen(false)}
+                className="w-full sm:w-auto order-2 sm:order-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto order-1 sm:order-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Cargar Fórmula
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

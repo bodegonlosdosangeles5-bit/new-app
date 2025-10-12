@@ -75,13 +75,13 @@ export class FormulaService {
   }
 
   // Crear una nueva fórmula
-  static async createFormula(formula: Omit<Formula, 'id'>): Promise<Formula | null> {
+  static async createFormula(formula: Omit<Formula, 'id'> & { id?: string }): Promise<Formula | null> {
     try {
       console.log('🔧 Creando fórmula con datos:', formula);
       
-      // Generar ID único
-      const id = `F${Date.now()}`;
-      console.log('🆔 ID generado:', id);
+      // Usar ID proporcionado o generar uno único
+      const id = formula.id || `F${Date.now()}`;
+      console.log('🆔 ID usado:', id);
       
       // @ts-expect-error - Temporal para evitar errores de tipos
       const { data, error } = await supabase

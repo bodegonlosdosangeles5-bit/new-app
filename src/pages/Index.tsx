@@ -13,6 +13,14 @@ const Index = () => {
   
   // Usar el hook de fórmulas con Supabase
   const { formulas, loading, error, createFormula, updateFormula, deleteFormula } = useFormulas();
+  
+  // Logging para debug
+  console.log('🏠 Index.tsx - Estado actual:', { 
+    formulasCount: formulas.length, 
+    loading, 
+    error, 
+    activeSection 
+  });
 
   const renderSection = () => {
     switch (activeSection) {
@@ -33,7 +41,14 @@ const Index = () => {
       case "test":
         return <TestTable />;
       case "formula-test":
-        return <FormulaTest />;
+        return <FormulaTest 
+          formulas={formulas}
+          loading={loading}
+          error={error}
+          createFormula={createFormula}
+          updateFormula={updateFormula}
+          deleteFormula={deleteFormula}
+        />;
       default:
         return <DashboardMetrics />;
     }

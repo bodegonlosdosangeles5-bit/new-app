@@ -14,7 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      available_ingredients: {
+        Row: {
+          available: number
+          created_at: string | null
+          formula_id: string
+          id: number
+          name: string
+          required: number
+          unit: string
+        }
+        Insert: {
+          available: number
+          created_at?: string | null
+          formula_id: string
+          id?: number
+          name: string
+          required: number
+          unit: string
+        }
+        Update: {
+          available?: number
+          created_at?: string | null
+          formula_id?: string
+          id?: number
+          name?: string
+          required?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "available_ingredients_formula_id_fkey"
+            columns: ["formula_id"]
+            isOneToOne: false
+            referencedRelation: "formulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formulas: {
+        Row: {
+          batch_size: number
+          client_name: string | null
+          created_at: string | null
+          date: string | null
+          destination: string
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch_size?: number
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          destination: string
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch_size?: number
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          destination?: string
+          id?: string
+          name?: string
+          status?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      missing_ingredients: {
+        Row: {
+          created_at: string | null
+          formula_id: string
+          id: number
+          name: string
+          required: number
+          unit: string
+        }
+        Insert: {
+          created_at?: string | null
+          formula_id: string
+          id?: number
+          name: string
+          required: number
+          unit: string
+        }
+        Update: {
+          created_at?: string | null
+          formula_id?: string
+          id?: number
+          name?: string
+          required?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missing_ingredients_formula_id_fkey"
+            columns: ["formula_id"]
+            isOneToOne: false
+            referencedRelation: "formulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_connection: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

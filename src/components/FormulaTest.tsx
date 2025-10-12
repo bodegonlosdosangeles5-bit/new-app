@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { FormulaService } from '@/services/formulaService';
-import { useFormulas } from '@/hooks/useFormulas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
-export const FormulaTest = () => {
-  // Usar el hook global de fórmulas
-  const { formulas, loading, error, createFormula, updateFormula, deleteFormula } = useFormulas();
+interface FormulaTestProps {
+  formulas: any[];
+  loading: boolean;
+  error: string | null;
+  createFormula: (formula: any) => Promise<any>;
+  updateFormula: (id: string, updates: any) => Promise<any>;
+  deleteFormula: (id: string) => Promise<boolean>;
+}
+
+export const FormulaTest = ({ formulas, loading, error, createFormula, updateFormula, deleteFormula }: FormulaTestProps) => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [isCreating, setIsCreating] = useState(false);
   const [newFormula, setNewFormula] = useState({
@@ -21,6 +27,14 @@ export const FormulaTest = () => {
     type: 'stock',
     clientName: '',
     status: 'available' // Campo de estatus
+  });
+
+  // Logging para debug
+  console.log('🧪 FormulaTest - Props recibidas:', { 
+    formulasCount: formulas.length, 
+    loading, 
+    error,
+    formulas: formulas.map(f => ({ id: f.id, name: f.name, status: f.status }))
   });
 
   // Probar conexión al montar el componente
