@@ -148,11 +148,15 @@ All colors MUST be HSL.
 /* Custom component styles */
 @layer components {
   .card-elegant {
-    @apply bg-card border border-border rounded-lg shadow-[var(--shadow-card)] transition-[var(--transition-smooth)];
+    @apply bg-card border border-border rounded-lg shadow-[var(--shadow-card)] transition-all duration-500 ease-in-out;
   }
   
   .card-elegant:hover {
     @apply shadow-[var(--shadow-soft)] scale-[1.02];
+  }
+  
+  .card-elegant.status-change {
+    @apply animate-pulse;
   }
   
   .gradient-primary {

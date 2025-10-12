@@ -26,8 +26,7 @@ export class FormulaService {
   // Obtener todas las fórmulas
   static async getFormulas(): Promise<Formula[]> {
     try {
-      // @ts-expect-error - Temporal para evitar errores de tipos
-      const { data, error } = await supabase
+      const { data: formulas, error } = await supabase
         .from('formulas')
         .select(`
           id,
@@ -39,35 +38,70 @@ export class FormulaService {
           type,
           client_name,
           created_at,
-          updated_at,
-          missing_ingredients (
-            name,
-            required,
-            unit
-          ),
-          available_ingredients (
-            name,
-            required,
-            available,
-            unit
-          )
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return data?.map(formula => ({
+      if (!formulas || formulas.length === 0) {
+        return [];
+      }
+
+      // Obtener ingredientes faltantes para todas las fórmulas
+      const formulaIds = formulas.map(f => f.id);
+      
+      const { data: missingIngredients } = await supabase
+        .from('missing_ingredients')
+        .select('formula_id, name, required, unit')
+        .in('formula_id', formulaIds);
+
+      const { data: availableIngredients } = await supabase
+        .from('available_ingredients')
+        .select('formula_id, name, required, available, unit')
+        .in('formula_id', formulaIds);
+
+      // Agrupar ingredientes por fórmula
+      const missingByFormula = (missingIngredients || []).reduce((acc, ingredient) => {
+        if (!acc[ingredient.formula_id]) {
+          acc[ingredient.formula_id] = [];
+        }
+        acc[ingredient.formula_id].push({
+          name: ingredient.name,
+          required: parseFloat(ingredient.required.toString()),
+          unit: ingredient.unit
+        });
+        return acc;
+      }, {} as Record<string, Array<{name: string, required: number, unit: string}>>);
+
+      // Log para debugging
+      console.log('🔍 Ingredientes faltantes agrupados:', missingByFormula);
+
+      const availableByFormula = (availableIngredients || []).reduce((acc, ingredient) => {
+        if (!acc[ingredient.formula_id]) {
+          acc[ingredient.formula_id] = [];
+        }
+        acc[ingredient.formula_id].push({
+          name: ingredient.name,
+          required: parseFloat(ingredient.required.toString()),
+          available: parseFloat(ingredient.available.toString()),
+          unit: ingredient.unit
+        });
+        return acc;
+      }, {} as Record<string, Array<{name: string, required: number, available: number, unit: string}>>);
+
+      return formulas.map(formula => ({
         id: formula.id,
         name: formula.name,
         batchSize: formula.batch_size,
-        status: formula.status,
+        status: formula.status as 'available' | 'incomplete',
         destination: formula.destination,
         date: formula.date || undefined,
-        type: formula.type,
+        type: formula.type as 'stock' | 'client',
         clientName: formula.client_name || undefined,
-        missingIngredients: formula.missing_ingredients || [],
-        ingredients: formula.available_ingredients || []
-      })) || [];
+        missingIngredients: missingByFormula[formula.id] || [],
+        ingredients: availableByFormula[formula.id] || []
+      }));
     } catch (error) {
       console.error('Error fetching formulas:', error);
       return [];
@@ -83,7 +117,6 @@ export class FormulaService {
       const id = formula.id || `F${Date.now()}`;
       console.log('🆔 ID usado:', id);
       
-      // @ts-expect-error - Temporal para evitar errores de tipos
       const { data, error } = await supabase
         .from('formulas')
         .insert({
@@ -115,7 +148,6 @@ export class FormulaService {
           unit: ingredient.unit
         }));
 
-        // @ts-expect-error
         await supabase
           .from('missing_ingredients')
           .insert(missingIngredientsData);
@@ -131,7 +163,6 @@ export class FormulaService {
           unit: ingredient.unit
         }));
 
-        // @ts-expect-error
         await supabase
           .from('available_ingredients')
           .insert(availableIngredientsData);
@@ -153,7 +184,6 @@ export class FormulaService {
   // Actualizar una fórmula
   static async updateFormula(id: string, updates: Partial<Formula>): Promise<Formula | null> {
     try {
-      // @ts-expect-error - Temporal para evitar errores de tipos
       const { data, error } = await supabase
         .from('formulas')
         .update({
@@ -175,7 +205,6 @@ export class FormulaService {
       // Actualizar ingredientes faltantes si se proporcionan
       if (updates.missingIngredients) {
         // Eliminar ingredientes existentes
-        // @ts-expect-error
         await supabase
           .from('missing_ingredients')
           .delete()
@@ -190,7 +219,6 @@ export class FormulaService {
             unit: ingredient.unit
           }));
 
-          // @ts-expect-error
           await supabase
             .from('missing_ingredients')
             .insert(missingIngredientsData);
@@ -207,10 +235,50 @@ export class FormulaService {
     }
   }
 
+  // Agregar ingrediente faltante a una fórmula
+  static async addMissingIngredient(formulaId: string, ingredient: {
+    name: string;
+    required: number;
+    unit: string;
+  }): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('missing_ingredients')
+        .insert({
+          formula_id: formulaId,
+          name: ingredient.name,
+          required: ingredient.required,
+          unit: ingredient.unit
+        });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error adding missing ingredient:', error);
+      return false;
+    }
+  }
+
+  // Eliminar ingrediente faltante de una fórmula
+  static async removeMissingIngredient(formulaId: string, ingredientName: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('missing_ingredients')
+        .delete()
+        .eq('formula_id', formulaId)
+        .eq('name', ingredientName);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error removing missing ingredient:', error);
+      return false;
+    }
+  }
+
   // Eliminar una fórmula
   static async deleteFormula(id: string): Promise<boolean> {
     try {
-      // @ts-expect-error - Temporal para evitar errores de tipos
       const { error } = await supabase
         .from('formulas')
         .delete()

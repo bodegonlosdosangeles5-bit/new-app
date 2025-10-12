@@ -116,7 +116,7 @@ export const InventorySection = () => {
 
   const filteredItems = inventoryItems.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.certificate.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -274,7 +274,7 @@ export const InventorySection = () => {
           <div className="relative w-full sm:w-80 lg:w-96">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Buscar por nombre, ID o ubicación..."
+              placeholder="Buscar por nombre, certificado o ubicación..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -297,7 +297,7 @@ export const InventorySection = () => {
                     {item.name}
                   </CardTitle>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    ID: {item.id}
+                    Certificado: {item.certificate}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

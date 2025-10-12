@@ -231,7 +231,7 @@ export const FormulaTest = ({ formulas, loading, error, createFormula, updateFor
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">Terminada</SelectItem>
-                    <SelectItem value="incomplete">Incompleta (Faltan materias primas)</SelectItem>
+                    <SelectItem value="incomplete">Faltante de materia prima</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -298,7 +298,7 @@ export const FormulaTest = ({ formulas, loading, error, createFormula, updateFor
                         variant={formula.status === 'available' ? 'default' : 'destructive'}
                         className="text-xs"
                       >
-                        {formula.status === 'available' ? 'Terminada' : 'Incompleta'}
+                        {formula.status === 'available' ? 'Terminada' : 'Faltante de materia prima'}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">

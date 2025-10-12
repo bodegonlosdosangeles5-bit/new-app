@@ -6,13 +6,22 @@ import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
 import { TestTable } from "@/components/TestTable";
 import { FormulaTest } from "@/components/FormulaTest";
-import { useFormulas } from "@/hooks/useFormulas";
+import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   
-  // Usar el hook de fórmulas con Supabase
-  const { formulas, loading, error, createFormula, updateFormula, deleteFormula } = useFormulas();
+  // Usar el hook de fórmulas con Supabase Realtime
+  const { 
+    formulas, 
+    loading, 
+    error, 
+    createFormula, 
+    updateFormula, 
+    deleteFormula,
+    addMissingIngredient,
+    removeMissingIngredient
+  } = useRealtimeFormulas();
   
   // Logging para debug
   console.log('🏠 Index.tsx - Estado actual:', { 
@@ -29,10 +38,12 @@ const Index = () => {
       case "formulas":
         return <FormulasSection 
           formulas={formulas} 
-          setFormulas={() => {}} // Función vacía ya que usamos Supabase
+          setFormulas={() => {}} // Función vacía ya que usamos Supabase Realtime
           createFormula={createFormula}
           updateFormula={updateFormula}
           deleteFormula={deleteFormula}
+          addMissingIngredient={addMissingIngredient}
+          removeMissingIngredient={removeMissingIngredient}
           loading={loading}
           error={error}
         />;
