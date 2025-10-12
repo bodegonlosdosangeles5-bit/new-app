@@ -35,15 +35,30 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
 
   // Mostrar fórmulas terminadas con destino a Villa Martelli
   const currentProduction = useMemo(() => {
-    return formulas.filter(formula => {
+    console.log('🔍 Fórmulas recibidas en ProductionSection:', formulas);
+    
+    const filtered = formulas.filter(formula => {
       const normalizedStatus = normalizeText(formula.status);
       const normalizedDestination = normalizeText(formula.destination);
       
       const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
       const isVillaMartelli = normalizedDestination === 'villamartelli';
       
+      console.log(`📋 Fórmula ${formula.name}:`, {
+        status: formula.status,
+        normalizedStatus,
+        destination: formula.destination,
+        normalizedDestination,
+        isTerminated,
+        isVillaMartelli,
+        passes: isTerminated && isVillaMartelli
+      });
+      
       return isTerminated && isVillaMartelli;
     });
+    
+    console.log('✅ Fórmulas filtradas para producción:', filtered);
+    return filtered;
   }, [formulas]);
 
   // Calcular la producción total del mes sumando los kilogramos de todas las fórmulas terminadas

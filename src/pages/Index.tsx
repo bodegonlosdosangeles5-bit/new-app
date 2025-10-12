@@ -4,77 +4,36 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { InventorySection } from "@/components/InventorySection";
 import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
+import { TestTable } from "@/components/TestTable";
+import { FormulaTest } from "@/components/FormulaTest";
+import { useFormulas } from "@/hooks/useFormulas";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   
-  // Inicializar con datos de ejemplo
-  const [formulas, setFormulas] = useState([
-    {
-      id: "F001",
-      name: "Lavanda Premium",
-      description: "Fragancia clásica de lavanda con notas florales",
-      category: "Floral",
-      batchSize: 50,
-      status: "available",
-      estimatedTime: "4 horas",
-      destination: "Florencio Varela",
-      date: "2024-01-15",
-      type: "stock",
-      clientName: "",
-      ingredients: [
-        { name: "Aceite Esencial de Lavanda", required: 15, available: 25.5, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 30, available: 180, unit: "L" },
-        { name: "Benzilacetato", required: 2.5, available: 12.8, unit: "kg" },
-        { name: "Linalool Sintético", required: 1.2, available: 2.1, unit: "kg" },
-      ],
-    },
-    {
-      id: "F002",
-      name: "Rosa Elegante",
-      description: "Esencia refinada con pétalos de rosa búlgara",
-      category: "Floral",
-      batchSize: 25,
-      status: "incomplete",
-      estimatedTime: "6 horas",
-      destination: "Villa Martelli",
-      date: "2024-01-14",
-      type: "client",
-      clientName: "Cliente Premium SA",
-      ingredients: [
-        { name: "Aceite de Rosa Búlgara", required: 10, available: 5.2, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 15, available: 180, unit: "L" },
-        { name: "Benzilacetato", required: 1.8, available: 12.8, unit: "kg" },
-      ],
-    },
-    {
-      id: "F003",
-      name: "Citrus Fresh",
-      description: "Mezcla energizante de cítricos mediterráneos",
-      category: "Cítrica",
-      batchSize: 75,
-      status: "available",
-      estimatedTime: "3 horas",
-      destination: "Villa Martelli",
-      date: "2024-01-13",
-      type: "stock",
-      clientName: "",
-      ingredients: [
-        { name: "Aceite Esencial de Lavanda", required: 8, available: 25.5, unit: "kg" },
-        { name: "Alcohol Etílico 96°", required: 45, available: 180, unit: "L" },
-        { name: "Linalool Sintético", required: 3.2, available: 2.1, unit: "kg" },
-      ],
-    },
-  ]);
+  // Usar el hook de fórmulas con Supabase
+  const { formulas, loading, error, createFormula, updateFormula, deleteFormula } = useFormulas();
 
   const renderSection = () => {
     switch (activeSection) {
       case "inventory":
         return <InventorySection />;
       case "formulas":
-        return <FormulasSection formulas={formulas} setFormulas={setFormulas} />;
+        return <FormulasSection 
+          formulas={formulas} 
+          setFormulas={() => {}} // Función vacía ya que usamos Supabase
+          createFormula={createFormula}
+          updateFormula={updateFormula}
+          deleteFormula={deleteFormula}
+          loading={loading}
+          error={error}
+        />;
       case "production":
         return <ProductionSection formulas={formulas} />;
+      case "test":
+        return <TestTable />;
+      case "formula-test":
+        return <FormulaTest />;
       default:
         return <DashboardMetrics />;
     }

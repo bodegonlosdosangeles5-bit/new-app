@@ -1,4 +1,4 @@
-import { BarChart3, Package, FlaskConical, Truck, Menu, X } from "lucide-react";
+import { BarChart3, Package, FlaskConical, Truck, Menu, X, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
@@ -16,6 +16,8 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
     { id: "inventory", label: "Inventario", icon: Package },
     { id: "formulas", label: "Fórmulas", icon: FlaskConical },
     { id: "production", label: "Producción", icon: Truck },
+    { id: "test", label: "Prueba DB", icon: TestTube },
+    { id: "formula-test", label: "Prueba Fórmulas", icon: FlaskConical },
   ];
 
   const handleNavClick = (section: string) => {

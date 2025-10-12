@@ -13,9 +13,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface FormulasSectionProps {
   formulas: any[];
   setFormulas: (formulas: any[]) => void;
+  createFormula?: (formula: any) => Promise<any>;
+  updateFormula?: (id: string, updates: any) => Promise<any>;
+  deleteFormula?: (id: string) => Promise<boolean>;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps) => {
+export const FormulasSection = ({ 
+  formulas, 
+  setFormulas, 
+  createFormula, 
+  updateFormula, 
+  deleteFormula,
+  loading = false,
+  error = null
+}: FormulasSectionProps) => {
   const [selectedFormula, setSelectedFormula] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -27,10 +40,11 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
     lot: "",
     name: "",
     batchSize: "",
-    destination: "",
+    destination: "Villa Martelli", // Valor por defecto para stock
     date: "",
     type: "stock", // "stock" o "client"
     clientName: "",
+    status: "available", // Campo de estatus
     missingIngredients: [{ name: "", required: "", unit: "" }]
   });
 
@@ -135,7 +149,7 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Solo usar materias primas faltantes
@@ -150,18 +164,44 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
     const hasMissingIngredients = missingIngredients.length > 0;
     const status = hasMissingIngredients ? "incomplete" : "available";
     
-    const formulaToAdd = {
-      ...newFormula,
-      id: newFormula.lot, // Usar el lote como ID
-      batchSize: parseInt(newFormula.batchSize),
-      status: status,
-      date: newFormula.date,
-      type: newFormula.type,
-      clientName: newFormula.type === "client" ? newFormula.clientName : "",
-      ingredients: missingIngredients
-    };
+    if (!createFormula) {
+      // Fallback al método local si no hay createFormula
+      const formulaToAdd = {
+        ...newFormula,
+        id: newFormula.lot, // Usar el lote como ID
+        batchSize: parseInt(newFormula.batchSize),
+        status: status,
+        date: newFormula.date,
+        type: newFormula.type,
+        clientName: newFormula.type === "client" ? newFormula.clientName : "",
+        ingredients: missingIngredients
+      };
+      
+      setFormulas([...currentFormulas, formulaToAdd]);
+    } else {
+      // Usar Supabase
+      try {
+        // Lógica automática: Stock = Villa Martelli, Cliente = Florencio Varela
+        const autoDestination = newFormula.type === 'stock' ? 'Villa Martelli' : 'Florencio Varela';
+        
+        const formulaData = {
+          name: newFormula.name,
+          batchSize: parseInt(newFormula.batchSize),
+          destination: autoDestination, // Destino automático
+          date: newFormula.date,
+          type: newFormula.type,
+          clientName: newFormula.type === "client" ? newFormula.clientName : "",
+          missingIngredients: missingIngredients,
+          status: newFormula.status // Usar el estatus seleccionado
+        };
+
+        await createFormula(formulaData);
+      } catch (error) {
+        console.error('Error creating formula:', error);
+        return;
+      }
+    }
     
-    setFormulas([...currentFormulas, formulaToAdd]);
     setIsModalOpen(false);
     // Resetear el formulario
     setNewFormula({
@@ -169,10 +209,11 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
       lot: "",
       name: "",
       batchSize: "",
-      destination: "",
+      destination: "Villa Martelli", // Reset con valor por defecto
       date: "",
       type: "stock",
       clientName: "",
+      status: "available", // Reset con valor por defecto
       missingIngredients: [{ name: "", required: "", unit: "" }]
     });
   };
@@ -408,15 +449,17 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="destination">Destino</Label>
-                <Select value={newFormula.destination} onValueChange={(value) => handleInputChange("destination", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar destino" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Florencio Varela">Florencio Varela (Uso Interno)</SelectItem>
-                    <SelectItem value="Villa Martelli">Villa Martelli (Sucursal)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">
+                    {newFormula.type === 'stock' ? 'Villa Martelli' : 'Florencio Varela'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {newFormula.type === 'stock' 
+                      ? 'Stock → Villa Martelli (automático)' 
+                      : 'Cliente → Florencio Varela (automático)'
+                    }
+                  </p>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -441,6 +484,19 @@ export const FormulasSection = ({ formulas, setFormulas }: FormulasSectionProps)
                   <SelectContent>
                     <SelectItem value="stock">Stock</SelectItem>
                     <SelectItem value="client">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="status">Estatus</Label>
+                <Select value={newFormula.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estatus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Terminada</SelectItem>
+                    <SelectItem value="incomplete">Incompleta (Faltan materias primas)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
