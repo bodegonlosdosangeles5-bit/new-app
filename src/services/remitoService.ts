@@ -96,7 +96,16 @@ export class RemitoService {
         p_destino: 'Villa Martelli',
         p_fecha: new Date().toISOString().split('T')[0],
         p_total_kilos: totalKilos,
-        p_observaciones: `Remito generado automáticamente con ${remitoItems.length} productos`
+        p_observaciones: null,
+        p_items: remitoItems.map(item => ({
+          producto_id: item.producto_id,
+          nombre_producto: item.nombre_producto,
+          kilos_sumados: item.kilos_sumados,
+          cantidad_lotes: item.cantidad_lotes,
+          lote: item.lote,
+          cliente_o_stock: item.cliente_o_stock,
+          notas: item.notas || ''
+        }))
       });
 
       if (error) {
@@ -107,6 +116,17 @@ export class RemitoService {
 
       // Obtener el remito creado con sus items
       const remito = await this.getRemitoById(data.remito_id);
+      
+      // Reiniciar la producción actual: cambiar status de las fórmulas incluidas
+      if (remito) {
+        console.log('🔄 Iniciando reinicio de producción después de crear remito...');
+        console.log('📋 Items de Villa Martelli a procesar:', villaMartelliItems.length);
+        await this.resetProductionAfterRemito(villaMartelliItems);
+        console.log('✅ Reinicio de producción completado');
+      } else {
+        console.error('❌ No se pudo obtener el remito creado, no se reiniciará la producción');
+      }
+      
       return remito;
 
     } catch (error) {
@@ -138,7 +158,7 @@ export class RemitoService {
           .from('remitos')
           .update({
             total_kilos: totalKilos,
-            observaciones: `Remito actualizado automáticamente con ${remitoItems.length} productos`,
+            observaciones: null,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingRemito.id)
@@ -163,7 +183,7 @@ export class RemitoService {
             fecha: today,
             total_kilos: totalKilos,
             estado: 'abierto',
-            observaciones: `Remito generado automáticamente con ${remitoItems.length} productos`
+            observaciones: null
           })
           .select()
           .single();
@@ -192,11 +212,61 @@ export class RemitoService {
       if (itemsError) throw itemsError;
 
       // 3. Obtener remito completo con items
-      return await this.getRemitoById(remito.id);
+      const remitoCompleto = await this.getRemitoById(remito.id);
+      
+      // Reiniciar la producción actual: cambiar status de las fórmulas incluidas
+      if (remitoCompleto) {
+        console.log('🔄 Iniciando reinicio de producción (fallback) después de crear remito...');
+        console.log('📋 Items de producción a procesar:', productionItems.length);
+        await this.resetProductionAfterRemito(productionItems);
+        console.log('✅ Reinicio de producción (fallback) completado');
+      } else {
+        console.error('❌ No se pudo obtener el remito completo (fallback), no se reiniciará la producción');
+      }
+      
+      return remitoCompleto;
 
     } catch (error) {
       console.error('❌ Error en fallback:', error);
       return null;
+    }
+  }
+
+  // Reiniciar la producción actual después de crear un remito
+  private static async resetProductionAfterRemito(productionItems: ProductionItem[]): Promise<void> {
+    try {
+      console.log('🔄 Reiniciando producción actual después de crear remito...');
+      console.log('📋 Items de producción a procesar:', productionItems.length);
+      
+      // Obtener los IDs de las fórmulas que se incluyeron en el remito
+      const formulaIds = productionItems.map(item => item.id);
+      console.log('🆔 IDs de fórmulas a procesar:', formulaIds);
+      
+      if (formulaIds.length === 0) {
+        console.log('⚠️ No hay fórmulas para reiniciar');
+        return;
+      }
+
+      // Cambiar el status de las fórmulas a "procesado" para que no aparezcan en producción actual
+      console.log('🔄 Actualizando status de fórmulas a "procesado"...');
+      const { error } = await supabase
+        .from('formulas')
+        .update({ 
+          status: 'procesado',
+          updated_at: new Date().toISOString()
+        })
+        .in('id', formulaIds);
+
+      if (error) {
+        console.error('❌ Error actualizando status de fórmulas:', error);
+        throw error;
+      }
+
+      console.log(`✅ ${formulaIds.length} fórmulas marcadas como procesadas`);
+      console.log('🎯 Producción actual reiniciada - las fórmulas ya no aparecerán en "Productos disponibles para Villa Martelli"');
+    } catch (error) {
+      console.error('❌ Error reiniciando producción:', error);
+      // No lanzar el error para no interrumpir el flujo del remito
     }
   }
 
@@ -269,6 +339,8 @@ export class RemitoService {
   // Cerrar remito
   static async closeRemito(remitoId: string): Promise<boolean> {
     try {
+      console.log('🔄 Cerrando remito en servicio:', remitoId);
+      
       const { error } = await supabase
         .from('remitos')
         .update({
@@ -277,7 +349,12 @@ export class RemitoService {
         })
         .eq('id', remitoId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error de Supabase al cerrar remito:', error);
+        throw error;
+      }
+      
+      console.log('✅ Remito cerrado exitosamente en servicio');
       return true;
     } catch (error) {
       console.error('❌ Error cerrando remito:', error);

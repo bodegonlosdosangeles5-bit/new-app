@@ -4,8 +4,6 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { InventorySection } from "@/components/InventorySection";
 import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
-import { TestTable } from "@/components/TestTable";
-import { FormulaTest } from "@/components/FormulaTest";
 import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
 import { Formula } from "@/services/formulaService";
 
@@ -52,19 +50,8 @@ const Index = () => {
         />;
       case "production":
         return <ProductionSection formulas={formulas as Formula[]} />;
-      case "test":
-        return <TestTable />;
-      case "formula-test":
-        return <FormulaTest 
-          formulas={formulas}
-          loading={loading}
-          error={error}
-          createFormula={createFormula}
-          updateFormula={updateFormula}
-          deleteFormula={deleteFormula}
-        />;
       default:
-        return <DashboardMetrics />;
+        return <DashboardMetrics formulas={formulas as Formula[]} />;
     }
   };
 
@@ -73,7 +60,7 @@ const Index = () => {
       <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
       
       <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-6 sm:mb-8 text-center">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-2">
             Control de Producción
           </h1>
@@ -82,8 +69,10 @@ const Index = () => {
           </p>
         </div>
         
-        <div className="w-full">
-          {renderSection()}
+        <div className="px-8 sm:px-12 lg:px-16 xl:px-24">
+          <div className="max-w-6xl mx-auto">
+            {renderSection()}
+          </div>
         </div>
       </main>
     </div>

@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { FileText, Package, Weight, Calendar, CheckCircle, XCircle, RefreshCw, AlertCircle } from "lucide-react";
+import { FileText, Package, Weight, Calendar, CheckCircle, XCircle, RefreshCw, AlertCircle, Truck, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRealtimeRemitos } from "@/hooks/useRealtimeRemitos";
+import { useRealtimeEnvios } from "@/hooks/useRealtimeEnvios";
 import { ProductionItem } from "@/services/remitoService";
 
 interface RemitoProductionProps {
@@ -15,6 +20,12 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null);
+  const [isCreateEnvioModalOpen, setIsCreateEnvioModalOpen] = useState(false);
+  const [newEnvio, setNewEnvio] = useState({
+    destino: "Villa Martelli",
+    fecha: new Date().toISOString().split('T')[0]
+  });
+  const [isCreatingEnvio, setIsCreatingEnvio] = useState(false);
 
   const {
     currentRemito,
@@ -23,6 +34,11 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
     generateRemitoForVillaMartelli,
     closeRemito
   } = useRealtimeRemitos();
+
+  const {
+    crearEnvioConRemitosPendientes,
+    crearEnvioConRemitoEspecifico
+  } = useRealtimeEnvios();
 
   // Filtrar items de Villa Martelli
   const villaMartelliItems = productionItems.filter(item => {
@@ -49,6 +65,8 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
       if (remito) {
         setShowSuccessMessage(`✅ Remito generado exitosamente con ${remito.items.length} productos (${remito.total_kilos} kg)`);
         setTimeout(() => setShowSuccessMessage(null), 5000);
+        // Abrir modal de envío después de generar el remito
+        setIsCreateEnvioModalOpen(true);
       } else {
         setShowSuccessMessage("❌ Error al generar el remito");
         setTimeout(() => setShowSuccessMessage(null), 5000);
@@ -63,11 +81,27 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
   };
 
   const handleCloseRemito = async () => {
-    if (!currentRemito) return;
+    console.log('🔄 Iniciando cierre de remito...', { currentRemito });
+    
+    if (!currentRemito) {
+      console.error('❌ No hay remito actual para cerrar');
+      setShowSuccessMessage("❌ No hay remito para cerrar");
+      setTimeout(() => setShowSuccessMessage(null), 3000);
+      return;
+    }
+
+    if (currentRemito.estado !== 'abierto') {
+      console.error('❌ El remito no está abierto:', currentRemito.estado);
+      setShowSuccessMessage("❌ El remito no está abierto");
+      setTimeout(() => setShowSuccessMessage(null), 3000);
+      return;
+    }
 
     try {
       setIsClosing(true);
+      console.log('🔄 Llamando a closeRemito con ID:', currentRemito.id);
       const success = await closeRemito(currentRemito.id);
+      console.log('✅ Resultado de closeRemito:', success);
       
       if (success) {
         setShowSuccessMessage("✅ Remito cerrado exitosamente");
@@ -77,11 +111,43 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
         setTimeout(() => setShowSuccessMessage(null), 5000);
       }
     } catch (error) {
-      console.error('Error cerrando remito:', error);
-      setShowSuccessMessage("❌ Error al cerrar el remito");
+      console.error('❌ Error cerrando remito:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setShowSuccessMessage(`❌ Error al cerrar el remito: ${errorMessage}`);
       setTimeout(() => setShowSuccessMessage(null), 5000);
     } finally {
       setIsClosing(false);
+    }
+  };
+
+  const handleCreateEnvio = async () => {
+    if (!newEnvio.destino.trim() || !newEnvio.fecha || !currentRemito) return;
+
+    setIsCreatingEnvio(true);
+    try {
+      // Crear envío con el remito específico que se acaba de generar
+      const nuevoEnvio = await crearEnvioConRemitoEspecifico(
+        currentRemito.id,
+        newEnvio.destino,
+        newEnvio.fecha,
+        undefined
+      );
+
+      if (nuevoEnvio) {
+        setShowSuccessMessage(`✅ Envío creado exitosamente: ${nuevoEnvio.numero_envio}`);
+        setTimeout(() => setShowSuccessMessage(null), 5000);
+        setIsCreateEnvioModalOpen(false);
+        setNewEnvio({ destino: "Villa Martelli", fecha: new Date().toISOString().split('T')[0] });
+      } else {
+        setShowSuccessMessage("❌ Error al crear el envío");
+        setTimeout(() => setShowSuccessMessage(null), 5000);
+      }
+    } catch (error) {
+      console.error('Error creando envío:', error);
+      setShowSuccessMessage("❌ Error al crear el envío");
+      setTimeout(() => setShowSuccessMessage(null), 5000);
+    } finally {
+      setIsCreatingEnvio(false);
     }
   };
 
@@ -277,8 +343,6 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
                           <TableHead className="text-xs">Lote</TableHead>
                           <TableHead className="text-xs">Cliente/Stock</TableHead>
                           <TableHead className="text-xs">Kilos</TableHead>
-                          <TableHead className="text-xs">Cant. Lotes</TableHead>
-                          <TableHead className="text-xs">Notas</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -295,12 +359,6 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
                             </TableCell>
                             <TableCell className="text-xs">
                               {item.kilos_sumados} kg
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {item.cantidad_lotes}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {item.notas || '-'}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -338,6 +396,65 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
           </CardContent>
         </Card>
       )}
+
+      {/* Modal para crear envío */}
+      <Dialog open={isCreateEnvioModalOpen} onOpenChange={setIsCreateEnvioModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Crear Envío
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Remito generado exitosamente.</strong> Ahora puedes crear un envío que incluirá automáticamente este remito.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="destino">Destino *</Label>
+              <Input
+                id="destino"
+                value={newEnvio.destino}
+                onChange={(e) => setNewEnvio(prev => ({ ...prev, destino: e.target.value }))}
+                placeholder="Ej: Villa Martelli, Florencio Varela"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fecha">Fecha *</Label>
+              <Input
+                id="fecha"
+                type="date"
+                value={newEnvio.fecha}
+                onChange={(e) => setNewEnvio(prev => ({ ...prev, fecha: e.target.value }))}
+              />
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Al crear el envío, el remito se cerrará automáticamente y aparecerá en la sección de envíos.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateEnvioModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateEnvio}
+              disabled={!newEnvio.destino.trim() || !newEnvio.fecha || isCreatingEnvio}
+              className="flex items-center gap-2"
+            >
+              {isCreatingEnvio ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Truck className="h-4 w-4" />
+              )}
+              {isCreatingEnvio ? 'Creando...' : 'Crear Envío'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

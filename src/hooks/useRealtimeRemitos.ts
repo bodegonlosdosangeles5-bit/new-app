@@ -122,21 +122,26 @@ export const useRealtimeRemitos = () => {
   const closeRemito = async (remitoId: string) => {
     try {
       setError(null);
-      console.log('🔄 Cerrando remito...');
+      console.log('🔄 Cerrando remito en hook...', remitoId);
       const success = await RemitoService.closeRemito(remitoId);
+      console.log('✅ Resultado del servicio:', success);
       
       if (success) {
-        console.log('✅ Remito cerrado exitosamente');
+        console.log('✅ Remito cerrado exitosamente en hook');
         // Recargar datos después de cerrar
+        console.log('🔄 Recargando datos...');
         await loadRemitos();
         await loadCurrentRemito();
+        console.log('✅ Datos recargados');
+      } else {
+        console.error('❌ El servicio retornó false');
       }
       
       return success;
     } catch (err) {
       setError('Error al cerrar el remito');
-      console.error('❌ Error cerrando remito:', err);
-      throw err;
+      console.error('❌ Error cerrando remito en hook:', err);
+      return false;
     }
   };
 
