@@ -123,6 +123,11 @@ export class RemitoService {
         console.log('📋 Items de Villa Martelli a procesar:', villaMartelliItems.length);
         await this.resetProductionAfterRemito(villaMartelliItems);
         console.log('✅ Reinicio de producción completado');
+        
+        // Crear automáticamente un envío con el remito generado
+        console.log('🚚 Creando envío automático para el remito...');
+        await this.createAutoEnvioForRemito(remito.id);
+        console.log('✅ Envío automático creado');
       } else {
         console.error('❌ No se pudo obtener el remito creado, no se reiniciará la producción');
       }
@@ -220,6 +225,11 @@ export class RemitoService {
         console.log('📋 Items de producción a procesar:', productionItems.length);
         await this.resetProductionAfterRemito(productionItems);
         console.log('✅ Reinicio de producción (fallback) completado');
+        
+        // Crear automáticamente un envío con el remito generado
+        console.log('🚚 Creando envío automático para el remito (fallback)...');
+        await this.createAutoEnvioForRemito(remitoCompleto.id);
+        console.log('✅ Envío automático creado (fallback)');
       } else {
         console.error('❌ No se pudo obtener el remito completo (fallback), no se reiniciará la producción');
       }
@@ -341,20 +351,54 @@ export class RemitoService {
     try {
       console.log('🔄 Cerrando remito en servicio:', remitoId);
       
-      const { error } = await supabase
+      // Validar que el ID existe
+      if (!remitoId || remitoId.trim() === '') {
+        console.error('❌ ID de remito inválido en servicio:', remitoId);
+        return false;
+      }
+      
+      // Verificar que el remito existe antes de cerrarlo
+      const { data: existingRemito, error: checkError } = await supabase
+        .from('remitos')
+        .select('id, estado')
+        .eq('id', remitoId)
+        .single();
+
+      if (checkError) {
+        console.error('❌ Error verificando remito:', checkError);
+        return false;
+      }
+
+      if (!existingRemito) {
+        console.error('❌ Remito no encontrado:', remitoId);
+        return false;
+      }
+
+      if (existingRemito.estado === 'cerrado') {
+        console.log('⚠️ El remito ya está cerrado');
+        return true; // Considerar como éxito si ya está cerrado
+      }
+      
+      const { data, error } = await supabase
         .from('remitos')
         .update({
           estado: 'cerrado',
           updated_at: new Date().toISOString()
         })
-        .eq('id', remitoId);
+        .eq('id', remitoId)
+        .select();
 
       if (error) {
         console.error('❌ Error de Supabase al cerrar remito:', error);
-        throw error;
+        return false;
+      }
+
+      if (!data || data.length === 0) {
+        console.error('❌ No se actualizó ningún registro');
+        return false;
       }
       
-      console.log('✅ Remito cerrado exitosamente en servicio');
+      console.log('✅ Remito cerrado exitosamente en servicio:', data[0]);
       return true;
     } catch (error) {
       console.error('❌ Error cerrando remito:', error);
@@ -395,6 +439,42 @@ export class RemitoService {
     } catch (error) {
       console.error('❌ Error obteniendo remitos:', error);
       return [];
+    }
+  }
+
+  // Crear automáticamente un envío con un remito específico
+  private static async createAutoEnvioForRemito(remitoId: string): Promise<void> {
+    try {
+      // Importar el servicio de envíos dinámicamente para evitar dependencias circulares
+      const { EnvioService } = await import('./envioService');
+      
+      // Crear envío automático con destino Villa Martelli
+      const envio = await EnvioService.crearEnvioConRemitoEspecifico(
+        remitoId,
+        'Villa Martelli',
+        'Envío automático generado con el remito'
+      );
+
+      if (envio) {
+        // Actualizar el envío a estado "entregado" inmediatamente
+        const { error } = await supabase
+          .from('envios')
+          .update({ 
+            estado: 'entregado',
+            fecha_envio: new Date().toISOString()
+          })
+          .eq('id', envio.id);
+
+        if (error) {
+          console.error('❌ Error actualizando estado del envío automático:', error);
+        } else {
+          console.log('✅ Envío automático creado y marcado como entregado');
+        }
+      } else {
+        console.error('❌ No se pudo crear el envío automático');
+      }
+    } catch (error) {
+      console.error('❌ Error creando envío automático:', error);
     }
   }
 }

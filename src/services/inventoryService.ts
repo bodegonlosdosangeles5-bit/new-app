@@ -61,6 +61,15 @@ export class InventoryService {
     try {
       console.log('🔧 Creando materia prima con datos:', item);
       
+      // Validar datos requeridos
+      if (!item.name || !item.certificate || !item.rack || !item.place || !item.level) {
+        throw new Error('Faltan campos requeridos');
+      }
+      
+      if (item.currentStock <= 0 || item.minStock <= 0 || item.maxStock <= 0) {
+        throw new Error('Los valores de stock deben ser mayores a 0');
+      }
+      
       // Generar ID único
       const id = `MP${Date.now()}`;
       console.log('🆔 ID usado:', id);
@@ -99,7 +108,11 @@ export class InventoryService {
 
       if (error) {
         console.error('❌ Error de Supabase:', error);
-        throw error;
+        throw new Error(`Error de base de datos: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No se recibieron datos de la base de datos');
       }
 
       const result = {
@@ -113,7 +126,7 @@ export class InventoryService {
       return result;
     } catch (error) {
       console.error('❌ Error creating inventory item:', error);
-      return null;
+      throw error; // Re-lanzar el error para que se maneje en el componente
     }
   }
 

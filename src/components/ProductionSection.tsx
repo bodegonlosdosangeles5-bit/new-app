@@ -36,8 +36,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
     loading: enviosLoading,
     error: enviosError,
     crearEnvioConRemitosPendientes,
-    getEnvioConRemitos,
-    actualizarEstadoEnvio
+    getEnvioConRemitos
   } = useRealtimeEnvios();
 
   // Función para normalizar texto (quitar tildes, espacios y convertir a minúsculas)
@@ -138,7 +137,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       case "en_transito":
         return "warning";
       case "pendiente":
-        return "secondary";
+        return "success";
       case "cancelado":
         return "destructive";
       default:
@@ -153,7 +152,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       case "en_transito":
         return "En Tránsito";
       case "pendiente":
-        return "Pendiente";
+        return "Entregado";
       case "cancelado":
         return "Cancelado";
       default:
@@ -410,7 +409,6 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
           setIsEnvioDetailOpen(false);
           setSelectedEnvio(null);
         }}
-        onUpdateEstado={actualizarEstadoEnvio}
       />
     </div>
   );

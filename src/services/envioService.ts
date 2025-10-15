@@ -303,27 +303,6 @@ export class EnvioService {
     }
   }
 
-  // Actualizar estado de envío
-  static async actualizarEstadoEnvio(
-    envioId: string, 
-    nuevoEstado: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado'
-  ): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('envios')
-        .update({ 
-          estado: nuevoEstado,
-          fecha_envio: nuevoEstado === 'entregado' ? new Date().toISOString() : null
-        })
-        .eq('id', envioId);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Error actualizando estado de envío:', error);
-      return false;
-    }
-  }
 
   // Eliminar envío
   static async eliminarEnvio(envioId: string): Promise<boolean> {

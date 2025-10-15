@@ -134,27 +134,6 @@ export const useRealtimeEnvios = () => {
     }
   }, []);
 
-  // Actualizar estado de envío
-  const actualizarEstadoEnvio = useCallback(async (
-    envioId: string,
-    nuevoEstado: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado'
-  ) => {
-    try {
-      setError(null);
-      const success = await EnvioService.actualizarEstadoEnvio(envioId, nuevoEstado);
-      
-      if (success) {
-        // Recargar envíos para reflejar el cambio
-        await loadEnvios();
-      }
-      
-      return success;
-    } catch (err) {
-      console.error('Error actualizando estado de envío:', err);
-      setError('Error al actualizar estado del envío');
-      return false;
-    }
-  }, [loadEnvios]);
 
   // Eliminar envío
   const eliminarEnvio = useCallback(async (envioId: string) => {
@@ -184,7 +163,6 @@ export const useRealtimeEnvios = () => {
     crearEnvioConRemitosPendientes,
     getEnvioConRemitos,
     getRemitosPendientes,
-    actualizarEstadoEnvio,
     eliminarEnvio
   };
 };

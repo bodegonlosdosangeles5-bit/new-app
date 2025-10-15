@@ -65,7 +65,7 @@ const Index = () => {
             Control de Producción
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
-            Gestión integral de inventario y formulación de esencias aromáticas
+            Gestión integral de inventario y formulación
           </p>
         </div>
         

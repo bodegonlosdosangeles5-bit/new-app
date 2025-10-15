@@ -15,6 +15,7 @@ export const InventorySection = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [newItem, setNewItem] = useState({
     name: "",
     certificate: "",
@@ -23,8 +24,6 @@ export const InventorySection = () => {
     level: "",
     currentStock: "",
     category: "Aceites Esenciales",
-    minStock: 5000, // 5kg en gramos
-    maxStock: 25000, // 25kg en gramos
     unit: "g", // Gramos por defecto
     status: "normal"
   });
@@ -86,16 +85,53 @@ export const InventorySection = () => {
     return 'g';
   };
 
+  // Función para determinar la unidad basada en el formato del número
+  const getSmartUnit = (value: number) => {
+    const str = value.toString();
+    // Si tiene punto decimal y es menor a 1, es gramos
+    if (str.includes('.') && value < 1) {
+      return 'g';
+    }
+    // Si es un número entero o mayor a 1, es kilogramos
+    return 'kg';
+  };
+
+  // Función para convertir a gramos basado en la unidad inteligente
+  const convertToGrams = (value: number) => {
+    const unit = getSmartUnit(value);
+    return unit === 'kg' ? value * 1000 : value;
+  };
+
+  // Función para mostrar el valor con la unidad correcta
+  const displayWithSmartUnit = (value: number) => {
+    const unit = getSmartUnit(value);
+    return unit === 'kg' ? `${value} kg` : `${value} g`;
+  };
+
   const handleEditItem = (item: InventoryItem) => {
-    setEditingItem({ ...item });
+    // Convertir de gramos a la unidad de visualización apropiada
+    const displayValue = item.currentStock >= 1000 ? item.currentStock / 1000 : item.currentStock;
+    const displayUnit = item.currentStock >= 1000 ? 'kg' : 'g';
+    
+    setEditingItem({ 
+      ...item, 
+      unit: displayUnit,
+      currentStock: displayValue
+    });
     setIsEditModalOpen(true);
   };
 
   const handleSaveEdit = async () => {
     if (editingItem) {
       try {
+        // Convertir a gramos para almacenamiento usando la lógica inteligente
+        const currentValue = parseFloat(editingItem.currentStock.toString()) || 0;
+        const stockInGrams = convertToGrams(currentValue);
+        
         const updates = {
           ...editingItem,
+          currentStock: stockInGrams,
+          unit: 'g', // Siempre almacenar en gramos
           location: `${editingItem.rack}-${editingItem.place}-${editingItem.level}`,
         };
         await updateInventoryItem(editingItem.id, updates);
@@ -130,8 +166,6 @@ export const InventorySection = () => {
       level: "",
       currentStock: "",
       category: "Aceites Esenciales",
-      minStock: 5000, // 5kg en gramos
-      maxStock: 25000, // 25kg en gramos
       unit: "g", // Gramos por defecto
       status: "normal"
     });
@@ -139,30 +173,63 @@ export const InventorySection = () => {
   };
 
   const handleSaveNewItem = async () => {
-    if (newItem.name && newItem.certificate && newItem.rack && newItem.place && newItem.level && newItem.currentStock) {
-      try {
-        const stockValue = parseFloat(newItem.currentStock);
-        
-        // Convertir a gramos para almacenamiento
-        const currentStockInGrams = convertToStorageUnit(stockValue, newItem.unit);
-        const minStockInGrams = convertToStorageUnit(newItem.minStock, newItem.unit);
-        const maxStockInGrams = convertToStorageUnit(newItem.maxStock, newItem.unit);
-        
-        const itemToAdd = {
-          name: newItem.name,
-          category: newItem.category,
-          currentStock: currentStockInGrams,
-          minStock: minStockInGrams,
-          maxStock: maxStockInGrams,
-          unit: 'g', // Siempre almacenar en gramos
-          location: `${newItem.rack}-${newItem.place}-${newItem.level}`,
-          certificate: newItem.certificate,
-          rack: newItem.rack,
-          place: newItem.place,
-          level: newItem.level,
-        };
+    // Validar campos requeridos
+    if (!newItem.name.trim()) {
+      alert('Por favor ingresa el nombre de la materia prima');
+      return;
+    }
+    if (!newItem.certificate.trim()) {
+      alert('Por favor ingresa el número de certificado');
+      return;
+    }
+    if (!newItem.rack.trim()) {
+      alert('Por favor ingresa el rack');
+      return;
+    }
+    if (!newItem.place.trim()) {
+      alert('Por favor ingresa el lugar');
+      return;
+    }
+    if (!newItem.level.trim()) {
+      alert('Por favor ingresa el nivel');
+      return;
+    }
+    if (!newItem.currentStock || parseFloat(newItem.currentStock) <= 0) {
+      alert('Por favor ingresa una cantidad válida');
+      return;
+    }
 
-        await createInventoryItem(itemToAdd);
+    setIsCreating(true);
+    
+    try {
+      const stockValue = parseFloat(newItem.currentStock);
+      
+      // Convertir a gramos para almacenamiento usando lógica inteligente
+      const currentStockInGrams = convertToGrams(stockValue);
+      
+      // Valores por defecto para stock mínimo y máximo
+      const minStockInGrams = 5000; // 5kg en gramos por defecto
+      const maxStockInGrams = 25000; // 25kg en gramos por defecto
+      
+      const itemToAdd = {
+        name: newItem.name.trim(),
+        category: newItem.category,
+        currentStock: currentStockInGrams,
+        minStock: minStockInGrams,
+        maxStock: maxStockInGrams,
+        unit: 'g', // Siempre almacenar en gramos
+        location: `${newItem.rack}-${newItem.place}-${newItem.level}`,
+        certificate: newItem.certificate.trim(),
+        rack: newItem.rack.trim(),
+        place: newItem.place.trim(),
+        level: newItem.level.trim(),
+      };
+
+      console.log('🔄 Intentando crear materia prima:', itemToAdd);
+      const result = await createInventoryItem(itemToAdd);
+      
+      if (result) {
+        console.log('✅ Materia prima creada exitosamente');
         setIsAddModalOpen(false);
         setNewItem({
           name: "",
@@ -172,14 +239,17 @@ export const InventorySection = () => {
           level: "",
           currentStock: "",
           category: "Aceites Esenciales",
-          minStock: 5000, // 5kg en gramos
-          maxStock: 25000, // 25kg en gramos
           unit: "g", // Gramos por defecto
           status: "normal"
         });
-      } catch (error) {
-        console.error('Error creando materia prima:', error);
+      } else {
+        alert('Error al crear la materia prima. Por favor intenta nuevamente.');
       }
+    } catch (error) {
+      console.error('❌ Error creando materia prima:', error);
+      alert(`Error al crear la materia prima: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -193,8 +263,6 @@ export const InventorySection = () => {
       level: "",
       currentStock: "",
       category: "Aceites Esenciales",
-      minStock: 5000, // 5kg en gramos
-      maxStock: 25000, // 25kg en gramos
       unit: "g", // Gramos por defecto
       status: "normal"
     });
@@ -206,6 +274,7 @@ export const InventorySection = () => {
       [field]: value
     }));
   };
+
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -297,26 +366,29 @@ export const InventorySection = () => {
                   <span className="text-xs sm:text-sm font-medium">Stock Actual</span>
                 </div>
                 <span className="text-base sm:text-lg font-bold text-foreground">
-                  {convertToDisplayUnit(item.currentStock, item.unit)}
+                  {item.currentStock >= 1000 ? 
+                    `${(item.currentStock / 1000)} kg` : 
+                    `${item.currentStock} g`}
                 </span>
               </div>
+
 
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Min: {convertToDisplayUnit(item.minStock, item.unit)}</span>
-                  <span>Max: {convertToDisplayUnit(item.maxStock, item.unit)}</span>
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-6 w-6 text-white flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium">Ubicación:</span>
                 </div>
-                <Progress 
-                  value={getStockPercentage(item.currentStock, item.minStock, item.maxStock)} 
-                  className="h-2"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-6 w-6 text-white flex-shrink-0" />
-                <span className="text-xs sm:text-sm truncate">
-                  <span className="font-medium">Ubicación:</span> {item.location}
-                </span>
+                <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm">
+                  <div className="bg-white/10 rounded px-2 py-1 text-center">
+                    <span className="font-medium">Rack:</span> {item.rack}
+                  </div>
+                  <div className="bg-white/10 rounded px-2 py-1 text-center">
+                    <span className="font-medium">Lugar:</span> {item.place}
+                  </div>
+                  <div className="bg-white/10 rounded px-2 py-1 text-center">
+                    <span className="font-medium">Nivel:</span> {item.level}
+                  </div>
+                </div>
               </div>
 
 
@@ -400,27 +472,36 @@ export const InventorySection = () => {
                     id="currentStock"
                     type="number"
                     step="0.1"
-                    value={editingItem.unit === 'g' && editingItem.currentStock >= 1000 ? 
-                      (editingItem.currentStock / 1000).toFixed(2) : 
-                      editingItem.currentStock.toString()}
+                    value={editingItem.currentStock.toString()}
                     onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
-                      const convertedValue = editingItem.unit === 'g' && value < 1000 ? value : value * 1000;
-                      handleInputChange('currentStock', convertedValue.toString());
+                      const inputValue = e.target.value;
+                      handleInputChange('currentStock', inputValue);
                     }}
-                    placeholder="25.5"
+                    placeholder="Ej: 1 (kg) o 0.500 (g)"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="unit">Unidad</Label>
                   <select
                     id="unit"
-                    value={editingItem.unit === 'g' && editingItem.currentStock >= 1000 ? 'kg' : editingItem.unit}
+                    value={editingItem.unit}
                     onChange={(e) => {
                       const newUnit = e.target.value;
-                      const currentValue = editingItem.currentStock;
-                      const convertedValue = newUnit === 'kg' ? currentValue / 1000 : currentValue * 1000;
-                      handleInputChange('unit', newUnit === 'kg' ? 'g' : 'g');
+                      const currentValue = parseFloat(editingItem.currentStock.toString()) || 0;
+                      let convertedValue;
+                      
+                      if (editingItem.unit === 'kg' && newUnit === 'g') {
+                        // De kg a g: multiplicar por 1000
+                        convertedValue = currentValue * 1000;
+                      } else if (editingItem.unit === 'g' && newUnit === 'kg') {
+                        // De g a kg: dividir por 1000
+                        convertedValue = currentValue / 1000;
+                      } else {
+                        // Misma unidad: no cambiar
+                        convertedValue = currentValue;
+                      }
+                      
+                      handleInputChange('unit', newUnit);
                       handleInputChange('currentStock', convertedValue.toString());
                     }}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -530,48 +611,25 @@ export const InventorySection = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-minStock">Stock Mínimo</Label>
-                <Input
-                  id="new-minStock"
-                  type="number"
-                  step="0.1"
-                  value={newItem.unit === 'kg' ? (newItem.minStock / 1000).toString() : newItem.minStock.toString()}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value) || 0;
-                    const convertedValue = newItem.unit === 'kg' ? value * 1000 : value;
-                    handleNewItemInputChange('minStock', convertedValue.toString());
-                  }}
-                  placeholder={newItem.unit === 'kg' ? "5" : "5000"}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-maxStock">Stock Máximo</Label>
-                <Input
-                  id="new-maxStock"
-                  type="number"
-                  step="0.1"
-                  value={newItem.unit === 'kg' ? (newItem.maxStock / 1000).toString() : newItem.maxStock.toString()}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value) || 0;
-                    const convertedValue = newItem.unit === 'kg' ? value * 1000 : value;
-                    handleNewItemInputChange('maxStock', convertedValue.toString());
-                  }}
-                  placeholder={newItem.unit === 'kg' ? "25" : "25000"}
-                />
-              </div>
-            </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancelAdd}>
+            <Button variant="outline" onClick={handleCancelAdd} disabled={isCreating}>
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
-            <Button onClick={handleSaveNewItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar
+            <Button onClick={handleSaveNewItem} disabled={isCreating}>
+              {isCreating ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

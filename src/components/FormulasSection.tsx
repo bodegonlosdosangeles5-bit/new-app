@@ -58,7 +58,7 @@ export const FormulasSection = ({
     batchSize: "",
     date: "",
     status: "available",
-    type: "uso_interno",
+    type: "stock",
     clientName: ""
   });
   const [missingIngredients, setMissingIngredients] = useState<Array<{
@@ -205,15 +205,15 @@ export const FormulasSection = ({
     }
 
     try {
-      // Lógica automática: Uso interno = Florencio Varela, Todo lo demás = Villa Martelli
-      const autoDestination = newFormula.type === 'uso_interno' ? 'Florencio Varela' : 'Villa Martelli';
+      // Lógica automática: Todas las fórmulas van a Villa Martelli
+      const autoDestination = 'Villa Martelli';
       
       const formulaData = {
         name: newFormula.name,
         batchSize: parseInt(newFormula.batchSize),
         destination: autoDestination,
         date: newFormula.date,
-        type: newFormula.type === 'uso_interno' ? 'stock' : 'client',
+        type: newFormula.type === 'cliente' ? 'client' : 'stock',
         clientName: newFormula.type === 'cliente' ? newFormula.clientName : '',
         status: newFormula.status,
         missingIngredients: newFormula.status === 'incomplete' ? missingIngredients.map(ing => ({
@@ -248,7 +248,7 @@ export const FormulasSection = ({
         batchSize: "",
         date: "",
         status: "available",
-        type: "uso_interno",
+        type: "stock",
         clientName: ""
       });
       setMissingIngredients([]);
@@ -963,7 +963,6 @@ export const FormulasSection = ({
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="uso_interno">Uso Interno (Florencio Varela)</SelectItem>
                     <SelectItem value="stock">Stock (Villa Martelli)</SelectItem>
                     <SelectItem value="cliente">Cliente (Villa Martelli)</SelectItem>
                     <SelectItem value="exportacion">Exportación (Villa Martelli)</SelectItem>
@@ -1075,10 +1074,7 @@ export const FormulasSection = ({
             <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-semibold text-sm mb-2">Destino Automático:</h4>
               <p className="text-sm text-muted-foreground">
-                {newFormula.type === 'uso_interno' 
-                  ? 'Uso Interno → Florencio Varela (automático)'
-                  : 'Stock/Cliente/Exportación → Villa Martelli (automático)'
-                }
+                Todas las fórmulas → Villa Martelli (automático)
               </p>
             </div>
 

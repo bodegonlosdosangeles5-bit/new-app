@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Package, MapPin, Calendar, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { X, Package, MapPin, Calendar, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,23 +9,17 @@ interface EnvioDetailModalProps {
   envio: EnvioConRemitos | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateEstado: (envioId: string, nuevoEstado: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado') => Promise<boolean>;
 }
 
 export const EnvioDetailModal = ({ 
   envio, 
   isOpen, 
-  onClose, 
-  onUpdateEstado 
+  onClose
 }: EnvioDetailModalProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-
   if (!envio) return null;
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800';
       case 'en_transito':
         return 'bg-blue-100 text-blue-800';
       case 'entregado':
@@ -40,24 +32,11 @@ export const EnvioDetailModal = ({
   };
 
   const getEstadoIcon = (estado: string) => {
-    switch (estado) {
-      case 'pendiente':
-        return <Clock className="h-4 w-4" />;
-      case 'en_transito':
-        return <Truck className="h-4 w-4" />;
-      case 'entregado':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'cancelado':
-        return <AlertCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
+    return <Clock className="h-4 w-4" />;
   };
 
   const getEstadoText = (estado: string) => {
     switch (estado) {
-      case 'pendiente':
-        return 'Pendiente';
       case 'en_transito':
         return 'En Tránsito';
       case 'entregado':
@@ -69,14 +48,6 @@ export const EnvioDetailModal = ({
     }
   };
 
-  const handleUpdateEstado = async (nuevoEstado: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado') => {
-    setIsUpdating(true);
-    try {
-      await onUpdateEstado(envio.id, nuevoEstado);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -84,12 +55,15 @@ export const EnvioDetailModal = ({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-6 w-6" />
+              <Package className="h-6 w-6" />
               Envío {envio.numero_envio}
             </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+            >
               <X className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </DialogHeader>
 
@@ -152,47 +126,6 @@ export const EnvioDetailModal = ({
             </CardContent>
           </Card>
 
-          {/* Controles de estado */}
-          {envio.estado !== 'entregado' && envio.estado !== 'cancelado' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Actualizar Estado</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2 flex-wrap">
-                  {envio.estado === 'pendiente' && (
-                    <Button
-                      onClick={() => handleUpdateEstado('en_transito')}
-                      disabled={isUpdating}
-                      className="flex items-center gap-2"
-                    >
-                      <Truck className="h-4 w-4" />
-                      Marcar como En Tránsito
-                    </Button>
-                  )}
-                  {envio.estado === 'en_transito' && (
-                    <Button
-                      onClick={() => handleUpdateEstado('entregado')}
-                      disabled={isUpdating}
-                      className="flex items-center gap-2"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Marcar como Entregado
-                    </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleUpdateEstado('cancelado')}
-                    disabled={isUpdating}
-                    className="flex items-center gap-2"
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                    Cancelar Envío
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Lista de remitos */}
           <Card>

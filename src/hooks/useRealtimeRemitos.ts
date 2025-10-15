@@ -123,6 +123,14 @@ export const useRealtimeRemitos = () => {
     try {
       setError(null);
       console.log('🔄 Cerrando remito en hook...', remitoId);
+      
+      // Validar que el ID existe
+      if (!remitoId || remitoId.trim() === '') {
+        console.error('❌ ID de remito inválido:', remitoId);
+        setError('ID de remito inválido');
+        return false;
+      }
+      
       const success = await RemitoService.closeRemito(remitoId);
       console.log('✅ Resultado del servicio:', success);
       
@@ -130,16 +138,23 @@ export const useRealtimeRemitos = () => {
         console.log('✅ Remito cerrado exitosamente en hook');
         // Recargar datos después de cerrar
         console.log('🔄 Recargando datos...');
-        await loadRemitos();
-        await loadCurrentRemito();
-        console.log('✅ Datos recargados');
+        try {
+          await loadRemitos();
+          await loadCurrentRemito();
+          console.log('✅ Datos recargados exitosamente');
+        } catch (reloadError) {
+          console.error('❌ Error recargando datos:', reloadError);
+          // No fallar el cierre por error de recarga
+        }
       } else {
         console.error('❌ El servicio retornó false');
+        setError('No se pudo cerrar el remito');
       }
       
       return success;
     } catch (err) {
-      setError('Error al cerrar el remito');
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      setError(`Error al cerrar el remito: ${errorMessage}`);
       console.error('❌ Error cerrando remito en hook:', err);
       return false;
     }

@@ -91,7 +91,7 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
     {
       title: "Kilos Disponibles",
       value: `${kilosDisponibles.toLocaleString()} kg`,
-      subtitle: "esencias producidas",
+      subtitle: "productos producidos",
       icon: TrendingUp,
       color: "accent",
       progress: 90,
@@ -101,7 +101,7 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
   const recentActivity = [
     {
       type: "production",
-      message: "Esencia Lavanda Premium - 50kg completados",
+      message: "Producto Lavanda Premium - 50kg completados",
       time: "Hace 2 horas",
       status: "success",
     },
