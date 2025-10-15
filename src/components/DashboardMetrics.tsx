@@ -127,41 +127,43 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Metrics Cards - Horizontal Layout */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <Card key={index} className="metric-card hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-                  {metric.title}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  {metric.hasSearch && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsSearchOpen(true)}
-                      className="h-8 w-8 p-0 hover:bg-primary/10"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <div className={`p-2 rounded-lg bg-${metric.color}/10 flex-shrink-0`}>
-                    <Icon className="h-6 w-6 text-white" />
+            <Card key={index} className="metric-card flex-1">
+              <CardContent className="card-content">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="card-title">
+                    {metric.title}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {metric.hasSearch && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSearchOpen(true)}
+                        className="h-8 w-8 p-0 hover:bg-primary/10"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <div className={`p-2 rounded-lg bg-${metric.color}/10 flex-shrink-0`}>
+                      <Icon className="card-icon" />
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold text-foreground">
-                  {metric.value}
-                </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {metric.subtitle}
-                </p>
-                <div className="mt-3 sm:mt-4">
-                  <Progress value={metric.progress} className="h-2" />
+                <div className="space-y-3">
+                  <div className="metric-value">
+                    {metric.value}
+                  </div>
+                  <p className="metric-label">
+                    {metric.subtitle}
+                  </p>
+                  <div className="mt-4">
+                    <Progress value={metric.progress} className="h-2" />
+                  </div>
                 </div>
               </CardContent>
             </Card>

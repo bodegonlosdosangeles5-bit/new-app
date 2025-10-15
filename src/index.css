@@ -2,136 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Custom Color Palette - Modern & Elegant */
 @layer base {
   :root {
-    --background: 240 15% 97%;
-    --foreground: 260 15% 8%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 260 15% 8%;
-
+    /* Light Mode Colors */
+    --background: 0 0% 100%;
+    --foreground: 210 100% 20%; /* #173F60 - Deep blue for text */
+    
+    --card: 35 100% 85%; /* #EACFA6 - Warm beige for cards */
+    --card-foreground: 210 100% 20%; /* #173F60 - Deep blue for card text */
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 260 15% 8%;
-
-    --primary: 262 83% 58%;
+    --popover-foreground: 210 100% 20%;
+    
+    --primary: 350 70% 70%; /* #EA99A8 - Coral pink for primary buttons */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 83% 70%;
-
-    --secondary: 120 38% 69%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 240 20% 95%;
-    --muted-foreground: 260 10% 40%;
-
-    --accent: 45 86% 62%;
-    --accent-foreground: 260 15% 8%;
-
-    --destructive: 0 72% 51%;
+    --primary-hover: 350 70% 65%; /* Darker coral for hover */
+    
+    --secondary: 35 100% 85%; /* #EACFA6 - Warm beige for secondary */
+    --secondary-foreground: 210 100% 20%; /* #173F60 - Deep blue for secondary text */
+    
+    --muted: 30 10% 70%; /* #A39F9E - Soft gray for muted elements */
+    --muted-foreground: 210 100% 20%; /* #173F60 - Deep blue for muted text */
+    
+    --accent: 210 100% 20%; /* #173F60 - Deep blue for accents */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-
-    --success: 120 38% 69%;
+    
+    --success: 120 50% 50%;
     --success-foreground: 0 0% 100%;
-
-    --warning: 45 86% 62%;
-    --warning-foreground: 260 15% 8%;
-
-    --border: 240 20% 90%;
-    --input: 240 20% 90%;
-    --ring: 262 83% 58%;
-
-    /* Gradients for aromatics theme */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(120 38% 80%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(45 86% 75%));
-    --gradient-background: linear-gradient(180deg, hsl(var(--background)), hsl(240 20% 95%));
-
-    /* Shadows with theme colors */
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-soft: 0 4px 20px -8px hsl(var(--primary) / 0.2);
-    --shadow-card: 0 2px 10px -4px hsl(260 15% 8% / 0.1);
-
-    /* Animations */
+    
+    --warning: 45 80% 60%;
+    --warning-foreground: 210 100% 20%;
+    
+    --border: 30 10% 70%; /* #A39F9E - Soft gray for borders */
+    --input: 30 10% 70%;
+    --ring: 350 70% 70%; /* #EA99A8 - Coral pink for focus rings */
+    
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, #EA99A8, #EACFA6);
+    --gradient-secondary: linear-gradient(135deg, #EACFA6, #A39F9E);
+    --gradient-accent: linear-gradient(135deg, #173F60, #EA99A8);
+    --gradient-background: linear-gradient(180deg, #ffffff, #f8f6f4);
+    
+    /* Shadows */
+    --shadow-elegant: 0 10px 30px -10px rgba(234, 153, 168, 0.3);
+    --shadow-soft: 0 4px 20px -8px rgba(234, 153, 168, 0.2);
+    --shadow-card: 0 2px 10px -4px rgba(23, 63, 96, 0.1);
+    
+    /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-
+    
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 262 83% 58%;
+    /* Dark Mode Colors */
+    --background: 260 30% 15%; /* #382461 - Dark purple base */
+    --foreground: 35 100% 85%; /* #EACFA6 - Warm beige for text */
+    
+    --card: 260 30% 20%; /* Slightly lighter than background */
+    --card-foreground: 35 100% 85%; /* #EACFA6 - Warm beige for card text */
+    
+    --popover: 260 30% 15%;
+    --popover-foreground: 35 100% 85%;
+    
+    --primary: 350 70% 70%; /* #EA99A8 - Coral pink (same as light) */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 83% 70%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 45 86% 62%;
-    --accent-foreground: 222.2 84% 4.9%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 120 38% 69%;
+    --primary-hover: 350 70% 75%; /* Lighter coral for dark mode hover */
+    
+    --secondary: 260 30% 25%; /* Darker purple for secondary */
+    --secondary-foreground: 35 100% 85%; /* #EACFA6 - Warm beige */
+    
+    --muted: 260 20% 30%; /* Darker muted */
+    --muted-foreground: 35 100% 70%; /* Slightly darker beige for muted text */
+    
+    --accent: 35 100% 85%; /* #EACFA6 - Warm beige for accents in dark mode */
+    --accent-foreground: 260 30% 15%; /* Dark purple for accent text */
+    
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 120 50% 60%;
     --success-foreground: 0 0% 100%;
-
-    --warning: 45 86% 62%;
-    --warning-foreground: 222.2 84% 4.9%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 262 83% 58%;
-
-    /* Gradients for dark theme */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(217.2 32.6% 25%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(45 86% 75%));
-    --gradient-background: linear-gradient(180deg, hsl(var(--background)), hsl(222.2 84% 8%));
-
-    /* Shadows with dark theme colors */
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-soft: 0 4px 20px -8px hsl(var(--primary) / 0.2);
-    --shadow-card: 0 2px 10px -4px hsl(0 0% 0% / 0.3);
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --warning: 45 80% 70%;
+    --warning-foreground: 260 30% 15%;
+    
+    --border: 260 20% 30%; /* Darker borders */
+    --input: 260 20% 30%;
+    --ring: 350 70% 70%; /* #EA99A8 - Coral pink for focus rings */
+    
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, #EA99A8, #382461);
+    --gradient-secondary: linear-gradient(135deg, #382461, #173F60);
+    --gradient-accent: linear-gradient(135deg, #EACFA6, #EA99A8);
+    --gradient-background: linear-gradient(180deg, #382461, #2a1a47);
+    
+    /* Dark mode shadows */
+    --shadow-elegant: 0 10px 30px -10px rgba(234, 153, 168, 0.2);
+    --shadow-soft: 0 4px 20px -8px rgba(234, 153, 168, 0.15);
+    --shadow-card: 0 2px 10px -4px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -141,22 +115,146 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
 }
 
 /* Custom component styles */
 @layer components {
+  /* Professional Card System */
   .card-elegant {
-    @apply bg-card border border-border rounded-lg shadow-[var(--shadow-card)] transition-all duration-500 ease-in-out;
+    @apply bg-card border border-border/50 rounded-xl shadow-[var(--shadow-card)] transition-all duration-200 ease-in-out;
+    max-width: 360px;
+    padding: clamp(1rem, 1.25rem, 1.5rem);
+    box-shadow: 0 2px 8px -2px rgba(23, 63, 96, 0.08), 0 1px 4px -1px rgba(23, 63, 96, 0.04);
   }
   
   .card-elegant:hover {
-    @apply shadow-[var(--shadow-soft)] scale-[1.02];
+    @apply shadow-[var(--shadow-soft)];
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px -5px rgba(23, 63, 96, 0.15), 0 4px 12px -2px rgba(23, 63, 96, 0.08);
   }
   
   .card-elegant.status-change {
     @apply animate-pulse;
+  }
+
+  /* Responsive Card Grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(0.75rem, 1rem, 1.5rem);
+    justify-content: center;
+    align-items: start;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 2rem, 2rem);
+  }
+
+  /* Mobile-first responsive adjustments */
+  @media (min-width: 640px) {
+    .cards-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .card-elegant {
+      max-width: 300px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .cards-grid {
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .cards-grid {
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .card-elegant {
+      max-width: 360px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .cards-grid {
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+  }
+
+  /* Card Content Styling */
+  .card-content {
+    @apply space-y-3;
+  }
+
+  .card-title {
+    @apply text-foreground font-semibold text-lg leading-tight;
+    font-size: clamp(1rem, 1.125rem, 1.25rem);
+  }
+
+  .card-subtitle {
+    @apply text-muted-foreground text-sm leading-relaxed;
+    font-size: clamp(0.875rem, 0.9375rem, 1rem);
+  }
+
+  .card-description {
+    @apply text-muted-foreground text-sm leading-relaxed;
+    font-size: clamp(0.8125rem, 0.875rem, 0.9375rem);
+    line-height: 1.5;
+  }
+
+  /* Card Images and Graphics */
+  .card-image {
+    @apply w-full h-auto rounded-lg object-cover;
+    aspect-ratio: 16/9;
+    max-height: 200px;
+  }
+
+  .card-icon {
+    @apply w-8 h-8 text-primary;
+    flex-shrink: 0;
+  }
+
+  /* Card Actions */
+  .card-actions {
+    @apply flex flex-wrap gap-2 mt-4;
+  }
+
+  .card-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+    background-color: hsl(var(--muted) / 0.1);
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Status Indicators */
+  .status-indicator {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    font-size: clamp(0.75rem, 0.8125rem, 0.875rem);
+  }
+
+  /* Metric Cards */
+  .metric-card {
+    @apply card-elegant p-6 space-y-4;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .metric-value {
+    @apply text-2xl font-bold text-foreground;
+    font-size: clamp(1.5rem, 1.75rem, 2rem);
+  }
+
+  .metric-label {
+    @apply text-sm text-muted-foreground font-medium;
+    font-size: clamp(0.75rem, 0.8125rem, 0.875rem);
   }
   
   .gradient-primary {
@@ -184,5 +282,31 @@ All colors MUST be HSL.
   
   .status-indicator {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  /* Custom button styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary-hover transition-colors duration-300;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors duration-300;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/80 transition-colors duration-300;
+  }
+
+  /* Custom text styles */
+  .text-primary {
+    @apply text-foreground;
+  }
+  
+  .text-secondary {
+    @apply text-muted-foreground;
+  }
+  
+  .text-accent {
+    color: hsl(var(--accent));
   }
 }

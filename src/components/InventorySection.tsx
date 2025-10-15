@@ -326,16 +326,16 @@ export const InventorySection = () => {
       )}
 
       {!loading && !error && filteredItems.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="cards-grid">
           {filteredItems.map((item) => (
-          <Card key={item.id} className="card-elegant hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2">
+          <Card key={item.id} className="card-elegant">
+            <CardContent className="card-content">
+              <div className="flex items-start justify-between gap-2 mb-4">
                 <div className="min-w-0 flex-1">
-                  <CardTitle className="text-base sm:text-lg font-semibold truncate">
+                  <h3 className="card-title truncate">
                     {item.name}
-                  </CardTitle>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  </h3>
+                  <p className="card-subtitle">
                     Certificado: {item.certificate}
                   </p>
                 </div>
@@ -343,7 +343,7 @@ export const InventorySection = () => {
                   <Badge 
                     variant={getStatusColor(item.status) === "destructive" ? "destructive" : 
                                 getStatusColor(item.status) === "warning" ? "secondary" : "default"}
-                    className="flex-shrink-0"
+                    className="card-badge"
                   >
                     {getStatusText(item.status)}
                   </Badge>
@@ -357,52 +357,50 @@ export const InventorySection = () => {
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Package className="h-6 w-6 text-white flex-shrink-0" />
-                  <span className="text-xs sm:text-sm font-medium">Stock Actual</span>
-                </div>
-                <span className="text-base sm:text-lg font-bold text-foreground">
-                  {item.currentStock >= 1000 ? 
-                    `${(item.currentStock / 1000)} kg` : 
-                    `${item.currentStock} g`}
-                </span>
-              </div>
-
-
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-6 w-6 text-white flex-shrink-0" />
-                  <span className="text-xs sm:text-sm font-medium">Ubicación:</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm">
-                  <div className="bg-white/10 rounded px-2 py-1 text-center">
-                    <span className="font-medium">Rack:</span> {item.rack}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Package className="card-icon" />
+                    <span className="card-description font-medium">Stock Actual</span>
                   </div>
-                  <div className="bg-white/10 rounded px-2 py-1 text-center">
-                    <span className="font-medium">Lugar:</span> {item.place}
-                  </div>
-                  <div className="bg-white/10 rounded px-2 py-1 text-center">
-                    <span className="font-medium">Nivel:</span> {item.level}
-                  </div>
-                </div>
-              </div>
-
-
-              {item.status !== "normal" && (
-                <div className="flex items-start space-x-2 p-2 rounded-lg bg-warning/10">
-                  <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-                  <span className="text-xs text-warning-foreground leading-relaxed">
-                    {item.status === "critical" ? "Stock crítico - Ordenar urgente" : "Stock bajo - Considerar pedido"}
+                  <span className="metric-value text-lg">
+                    {item.currentStock >= 1000 ? 
+                      `${(item.currentStock / 1000)} kg` : 
+                      `${item.currentStock} g`}
                   </span>
                 </div>
-              )}
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="card-icon" />
+                    <span className="card-description font-medium">Ubicación</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="card-badge text-center">
+                      <span className="font-medium">Rack:</span> {item.rack}
+                    </div>
+                    <div className="card-badge text-center">
+                      <span className="font-medium">Lugar:</span> {item.place}
+                    </div>
+                    <div className="card-badge text-center">
+                      <span className="font-medium">Nivel:</span> {item.level}
+                    </div>
+                  </div>
+                </div>
+
+
+                {item.status !== "normal" && (
+                  <div className="flex items-start space-x-2 p-3 rounded-lg bg-warning/10">
+                    <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                    <span className="card-description text-warning-foreground leading-relaxed">
+                      {item.status === "critical" ? "Stock crítico - Ordenar urgente" : "Stock bajo - Considerar pedido"}
+                    </span>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
-        ))}
+          ))}
         </div>
       )}
 

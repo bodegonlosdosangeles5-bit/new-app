@@ -15,8 +15,8 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "inventory", label: "Inventario", icon: Package },
     { id: "formulas", label: "Fórmulas", icon: FlaskConical },
-    { id: "production", label: "Producción", icon: Truck },
-  ];
+  { id: "production", label: "Producción", icon: Truck },
+];
 
   const handleNavClick = (section: string) => {
     onSectionChange(section);
