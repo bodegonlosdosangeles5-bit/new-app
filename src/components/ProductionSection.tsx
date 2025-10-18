@@ -137,7 +137,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       case "en_transito":
         return "warning";
       case "pendiente":
-        return "success";
+        return "secondary";
       case "cancelado":
         return "destructive";
       default:
@@ -152,7 +152,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       case "en_transito":
         return "En Tránsito";
       case "pendiente":
-        return "Entregado";
+        return "Pendiente";
       case "cancelado":
         return "Cancelado";
       default:
@@ -305,9 +305,11 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
                     <CardTitle className="text-base sm:text-lg font-semibold">
                       {envio.numero_envio}
                     </CardTitle>
-                    <Badge variant={getStatusColor(envio.estado) as "default" | "secondary" | "destructive" | "outline"}>
-                      {getStatusText(envio.estado)}
-                    </Badge>
+                    {envio.estado !== "pendiente" && (
+                      <Badge variant={getStatusColor(envio.estado) as "default" | "secondary" | "destructive" | "outline"}>
+                        {getStatusText(envio.estado)}
+                      </Badge>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">

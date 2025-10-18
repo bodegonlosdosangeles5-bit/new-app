@@ -26,6 +26,8 @@ export class FormulaService {
   // Obtener todas las fórmulas
   static async getFormulas(): Promise<Formula[]> {
     try {
+      console.log('🔍 FormulaService.getFormulas - Iniciando consulta...');
+      
       const { data: formulas, error } = await supabase
         .from('formulas')
         .select(`
@@ -42,11 +44,19 @@ export class FormulaService {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('🔍 FormulaService.getFormulas - Respuesta de Supabase:', { formulas, error });
+
+      if (error) {
+        console.error('❌ Error en consulta de fórmulas:', error);
+        throw error;
+      }
 
       if (!formulas || formulas.length === 0) {
+        console.log('ℹ️ No hay fórmulas en la base de datos');
         return [];
       }
+      
+      console.log(`✅ FormulaService.getFormulas - ${formulas.length} fórmulas encontradas`);
 
       // Obtener ingredientes faltantes para todas las fórmulas
       const formulaIds = formulas.map(f => f.id);

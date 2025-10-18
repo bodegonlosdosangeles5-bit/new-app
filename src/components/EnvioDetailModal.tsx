@@ -73,10 +73,12 @@ export const EnvioDetailModal = ({
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Información del Envío</span>
-                <Badge className={`${getEstadoColor(envio.estado)} flex items-center gap-1`}>
-                  {getEstadoIcon(envio.estado)}
-                  {getEstadoText(envio.estado)}
-                </Badge>
+                {envio.estado !== "pendiente" && (
+                  <Badge className={`${getEstadoColor(envio.estado)} flex items-center gap-1`}>
+                    {getEstadoIcon(envio.estado)}
+                    {getEstadoText(envio.estado)}
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -153,9 +155,11 @@ export const EnvioDetailModal = ({
                             <Badge variant="outline">
                               {remito.total_kilos} kg
                             </Badge>
-                            <Badge className={getEstadoColor(remito.estado)}>
-                              {getEstadoText(remito.estado)}
-                            </Badge>
+                            {remito.estado !== "abierto" && (
+                              <Badge className={getEstadoColor(remito.estado)}>
+                                {getEstadoText(remito.estado)}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="text-sm text-muted-foreground">

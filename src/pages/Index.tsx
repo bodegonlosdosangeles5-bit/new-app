@@ -6,6 +6,8 @@ import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
 import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
 import { Formula } from "@/services/formulaService";
+import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
+import { AuthProvider } from "@/components/Auth/AuthProvider";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -28,8 +30,18 @@ const Index = () => {
     formulasCount: formulas.length, 
     loading, 
     error, 
-    activeSection 
+    activeSection,
+    formulas: formulas
   });
+  
+  // Log adicional para debug
+  if (error) {
+    console.error('🚨 Error en Index.tsx:', error);
+  }
+  
+  if (loading) {
+    console.log('⏳ Index.tsx - Cargando fórmulas...');
+  }
 
   const renderSection = () => {
     switch (activeSection) {
@@ -56,26 +68,30 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
-      <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
-      
-      <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-6 sm:mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-2">
-            Control de Producción
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
-            Gestión integral de inventario y formulación
-          </p>
+    <AuthProvider>
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-b from-background to-muted">
+          <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
+          
+          <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+            <div className="mb-6 sm:mb-8 text-center">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-2">
+                Control de Producción
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
+                Gestión integral de inventario y formulación
+              </p>
+            </div>
+            
+            <div className="px-8 sm:px-12 lg:px-16 xl:px-24">
+              <div className="max-w-6xl mx-auto">
+                {renderSection()}
+              </div>
+            </div>
+          </main>
         </div>
-        
-        <div className="px-8 sm:px-12 lg:px-16 xl:px-24">
-          <div className="max-w-6xl mx-auto">
-            {renderSection()}
-          </div>
-        </div>
-      </main>
-    </div>
+      </ProtectedRoute>
+    </AuthProvider>
   );
 };
 

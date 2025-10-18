@@ -85,9 +85,16 @@ export const FormulasSection = ({
       id: f.id, 
       name: f.name, 
       status: f.status,
+      destination: f.destination,
       missingIngredientsCount: f.missingIngredients?.length || 0,
       missingIngredients: f.missingIngredients
     }))
+  });
+  
+  console.log('📋 FormulasSection - Estado de filtros:', {
+    showOnlyIncomplete,
+    destinationFilter,
+    currentFormulasCount: currentFormulas.length
   });
 
 
@@ -142,7 +149,25 @@ export const FormulasSection = ({
     const actualStatus = getFormulaStatus(formula);
     const statusMatch = showOnlyIncomplete ? actualStatus === "incomplete" : true;
     const destinationMatch = destinationFilter === "all" || formula.destination === destinationFilter;
+    
+    console.log(`🔍 Filtrado fórmula ${formula.name}:`, {
+      actualStatus,
+      showOnlyIncomplete,
+      statusMatch,
+      destination: formula.destination,
+      destinationFilter,
+      destinationMatch,
+      passes: statusMatch && destinationMatch
+    });
+    
     return statusMatch && destinationMatch;
+  });
+  
+  console.log('📊 FormulasSection - Resultado del filtrado:', {
+    totalFormulas: currentFormulas.length,
+    filteredFormulas: filteredFormulas.length,
+    showOnlyIncomplete,
+    destinationFilter
   });
 
   // Función para actualizar automáticamente fórmulas incompletas sin faltantes
@@ -652,10 +677,16 @@ export const FormulasSection = ({
                     variant="outline" 
                     size="sm"
                     onClick={() => handleEditFormula(formula)}
-                    className="flex items-center gap-2"
+                    disabled={actualStatus === "available"}
+                    className={`flex items-center gap-2 ${
+                      actualStatus === "available" 
+                        ? "opacity-50 cursor-not-allowed" 
+                        : "hover:bg-gray-100"
+                    }`}
+                    title={actualStatus === "available" ? "No se puede editar una fórmula terminada" : "Editar fórmula"}
                   >
                     <Edit className="h-4 w-4" />
-                    Editar
+                    {actualStatus === "available" ? "No Editable" : "Editar"}
                   </Button>
                 </div>
               </CardContent>

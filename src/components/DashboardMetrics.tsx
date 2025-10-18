@@ -46,7 +46,16 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
 
   // Calcular fórmulas terminadas para Villa Martelli (excluyendo procesadas)
   const formulasTerminadas = useMemo(() => {
-    return formulas.filter(formula => {
+    console.log('🔍 DashboardMetrics - Filtrado de fórmulas:');
+    console.log('📊 Total de fórmulas recibidas:', formulas.length);
+    console.log('📊 Fórmulas recibidas:', formulas.map(f => ({
+      id: f.id,
+      name: f.name,
+      status: f.status,
+      destination: f.destination
+    })));
+    
+    const filtered = formulas.filter(formula => {
       const normalizedStatus = normalizeText(formula.status);
       const normalizedDestination = normalizeText(formula.destination);
       
@@ -54,8 +63,22 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
       const isVillaMartelli = normalizedDestination === 'villamartelli';
       const isNotProcessed = normalizedStatus !== 'procesado';
       
+      console.log(`🔍 Fórmula ${formula.name}:`, {
+        status: formula.status,
+        normalizedStatus,
+        destination: formula.destination,
+        normalizedDestination,
+        isTerminated,
+        isVillaMartelli,
+        isNotProcessed,
+        passes: isTerminated && isVillaMartelli && isNotProcessed
+      });
+      
       return isTerminated && isVillaMartelli && isNotProcessed;
     });
+    
+    console.log(`✅ Fórmulas filtradas para Villa Martelli: ${filtered.length}`);
+    return filtered;
   }, [formulas]);
 
   // Filtrar inventario según término de búsqueda (igual que InventorySection)

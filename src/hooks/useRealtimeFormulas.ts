@@ -36,23 +36,42 @@ export const useRealtimeFormulas = () => {
       setLoading(true);
       setError(null);
       console.log('🔄 Cargando fórmulas desde Supabase...');
+      console.log('🔍 Verificando conexión a Supabase...');
+      
+      // Verificar conexión a Supabase
+      const { data: testData, error: testError } = await supabase
+        .from('formulas')
+        .select('count', { count: 'exact', head: true });
+      
+      if (testError) {
+        console.error('❌ Error de conexión a Supabase:', testError);
+        throw testError;
+      }
+      
+      console.log('✅ Conexión a Supabase exitosa. Total de fórmulas en BD:', testData);
+      
       const data = await FormulaService.getFormulas();
-      console.log('📊 Fórmulas cargadas:', data);
-      setFormulas(data);
+      console.log('📊 Fórmulas cargadas desde servicio:', data);
+      console.log('📊 Número de fórmulas cargadas:', data?.length || 0);
+      setFormulas(data || []);
       
       // Log adicional para debuggear el filtrado
-      const villaMartelliFormulas = data.filter(formula => {
+      const villaMartelliFormulas = data?.filter(formula => {
         const normalizedDestination = formula.destination?.toLowerCase().replace(/\s+/g, '') || '';
         const normalizedStatus = formula.status?.toLowerCase().replace(/\s+/g, '') || '';
         const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
         const isVillaMartelli = normalizedDestination === 'villamartelli';
         const isNotProcessed = normalizedStatus !== 'procesado';
         return isTerminated && isVillaMartelli && isNotProcessed;
-      });
+      }) || [];
       console.log(`📊 Fórmulas disponibles para Villa Martelli: ${villaMartelliFormulas.length}`);
     } catch (err) {
       setError('Error al cargar las fórmulas');
       console.error('❌ Error cargando fórmulas:', err);
+      console.error('❌ Detalles del error:', {
+        message: err instanceof Error ? err.message : 'Error desconocido',
+        stack: err instanceof Error ? err.stack : undefined
+      });
     } finally {
       setLoading(false);
     }
