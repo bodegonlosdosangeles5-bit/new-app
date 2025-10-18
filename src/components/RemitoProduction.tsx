@@ -21,7 +21,8 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
   const [isCreateEnvioModalOpen, setIsCreateEnvioModalOpen] = useState(false);
   const [newEnvio, setNewEnvio] = useState({
     destino: "Villa Martelli",
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: new Date().toISOString().split('T')[0],
+    numeroRemito: ""
   });
   const [isCreatingEnvio, setIsCreatingEnvio] = useState(false);
 
@@ -88,14 +89,18 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
         currentRemito.id,
         newEnvio.destino,
         newEnvio.fecha,
-        undefined
+        newEnvio.numeroRemito.trim() || undefined
       );
 
       if (nuevoEnvio) {
         setShowSuccessMessage(`✅ Envío creado exitosamente: ${nuevoEnvio.numero_envio}`);
         setTimeout(() => setShowSuccessMessage(null), 5000);
         setIsCreateEnvioModalOpen(false);
-        setNewEnvio({ destino: "Villa Martelli", fecha: new Date().toISOString().split('T')[0] });
+        setNewEnvio({ 
+          destino: "Villa Martelli", 
+          fecha: new Date().toISOString().split('T')[0],
+          numeroRemito: ""
+        });
       } else {
         setShowSuccessMessage("❌ Error al crear el envío");
         setTimeout(() => setShowSuccessMessage(null), 5000);
@@ -263,6 +268,15 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
                 type="date"
                 value={newEnvio.fecha}
                 onChange={(e) => setNewEnvio(prev => ({ ...prev, fecha: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numeroRemito">Número de Remito</Label>
+              <Input
+                id="numeroRemito"
+                value={newEnvio.numeroRemito}
+                onChange={(e) => setNewEnvio(prev => ({ ...prev, numeroRemito: e.target.value }))}
+                placeholder="Ej: R-2024-001 (opcional)"
               />
             </div>
             <div className="p-4 bg-blue-50 rounded-lg">

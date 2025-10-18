@@ -63,7 +63,10 @@ const Index = () => {
       case "production":
         return <ProductionSection formulas={formulas as Formula[]} />;
       default:
-        return <DashboardMetrics formulas={formulas as Formula[]} />;
+        return <DashboardMetrics 
+          formulas={formulas as Formula[]} 
+          onNavigateToProduction={() => setActiveSection("production")}
+        />;
     }
   };
 

@@ -10,10 +10,13 @@ import { useRealtimeInventory } from "@/hooks/useRealtimeInventory";
 
 interface DashboardMetricsProps {
   formulas?: Formula[];
+  onNavigateToProduction?: () => void;
 }
 
-export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
+export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: DashboardMetricsProps) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isOutOfStockOpen, setIsOutOfStockOpen] = useState(false);
+  const [isFormulasListOpen, setIsFormulasListOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Hook para obtener datos de inventario
@@ -93,15 +96,20 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
     );
   }, [inventoryItems, searchTerm]);
 
+  // Calcular materias primas sin stock (cantidad <= 0)
+  const outOfStockItems = useMemo(() => {
+    return inventoryItems.filter(item => (item.currentStock || 0) <= 0);
+  }, [inventoryItems]);
+
   const metrics = [
     {
-      title: "Materias Primas",
-      value: inventoryItems.length.toString(),
-      subtitle: "items en stock",
+      title: "Materias Primas sin Stock",
+      value: outOfStockItems.length.toString(),
+      subtitle: "items faltantes",
       icon: Package,
-      color: "primary",
-      progress: 85,
-      hasSearch: true,
+      color: "destructive",
+      progress: 0,
+      hasOutOfStock: true,
     },
     {
       title: "Fórmulas Terminadas",
@@ -110,6 +118,7 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
       icon: FlaskConical,
       color: "secondary",
       progress: 75,
+      hasNavigation: true,
     },
     {
       title: "Kilos Disponibles",
@@ -118,35 +127,10 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
       icon: TrendingUp,
       color: "accent",
       progress: 90,
+      hasFormulasList: true,
     },
   ];
 
-  const recentActivity = [
-    {
-      type: "production",
-      message: "Producto Lavanda Premium - 50kg completados",
-      time: "Hace 2 horas",
-      status: "success",
-    },
-    {
-      type: "inventory",
-      message: "Stock bajo: Aceite de Rosa (5kg restantes)",
-      time: "Hace 4 horas",
-      status: "warning",
-    },
-    {
-      type: "formula",
-      message: "Nueva fórmula 'Citrus Fresh' creada",
-      time: "Hace 6 horas",
-      status: "success",
-    },
-    {
-      type: "production",
-      message: "Lote L-2024-089 enviado al rack A-12",
-      time: "Hace 8 horas",
-      status: "success",
-    },
-  ];
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -154,8 +138,24 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
+          const isClickable = metric.hasOutOfStock || metric.hasSearch || metric.hasNavigation || metric.hasFormulasList;
+          
           return (
-            <Card key={index} className="metric-card flex-1">
+            <Card 
+              key={index} 
+              className={`metric-card flex-1 ${isClickable ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+              onClick={() => {
+                if (metric.hasOutOfStock) {
+                  setIsOutOfStockOpen(true);
+                } else if (metric.hasSearch) {
+                  setIsSearchOpen(true);
+                } else if (metric.hasNavigation && onNavigateToProduction) {
+                  onNavigateToProduction();
+                } else if (metric.hasFormulasList) {
+                  setIsFormulasListOpen(true);
+                }
+              }}
+            >
               <CardContent className="card-content">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="card-title">
@@ -166,7 +166,10 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsSearchOpen(true)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsSearchOpen(true);
+                        }}
                         className="h-8 w-8 p-0 hover:bg-primary/10"
                       >
                         <Search className="h-4 w-4" />
@@ -194,29 +197,6 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
         })}
       </div>
 
-      {/* Recent Activity */}
-      <Card className="card-elegant">
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg font-semibold">Actividad Reciente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 sm:space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-start sm:items-center space-x-3 sm:space-x-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className={`w-2 h-2 rounded-full bg-${activity.status === 'success' ? 'success' : 'warning'} flex-shrink-0 mt-2 sm:mt-0`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed">
-                    {activity.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {activity.time}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Modal de búsqueda de inventario */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
@@ -316,6 +296,183 @@ export const DashboardMetrics = ({ formulas = [] }: DashboardMetricsProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de materias primas sin stock */}
+      <Dialog open={isOutOfStockOpen} onOpenChange={setIsOutOfStockOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-destructive" />
+              Materias Primas sin Stock
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Resumen */}
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-destructive">
+                <Package className="h-5 w-5" />
+                <span className="font-semibold">
+                  {outOfStockItems.length} materias primas sin stock
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Estas materias primas necesitan ser reabastecidas urgentemente
+              </p>
+            </div>
+
+            {/* Lista de materias primas sin stock */}
+            <div className="max-h-96 overflow-y-auto">
+              {inventoryLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Cargando inventario...
+                </div>
+              ) : outOfStockItems.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  ¡Excelente! No hay materias primas sin stock
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {outOfStockItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 border border-destructive/20 rounded-lg bg-destructive/5 hover:bg-destructive/10 transition-colors space-y-3"
+                    >
+                      {/* Información principal */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-lg text-destructive truncate">
+                            {item.name}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Certificado: {item.certificate || 'Sin certificado'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium px-2 py-1 rounded-full bg-destructive text-destructive-foreground">
+                            Sin Stock
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información de stock y ubicación */}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-destructive" />
+                          <span className="font-medium">Stock actual:</span>
+                          <span className="text-destructive font-semibold">
+                            {item.currentStock || 0} {item.unit || 'unidades'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Ubicación:</span>
+                          <span className="truncate">{item.location || 'Sin ubicación'}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Resumen final */}
+            <div className="text-sm text-muted-foreground text-center border-t pt-4">
+              Total de materias primas sin stock: {outOfStockItems.length}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de lista de fórmulas terminadas */}
+      <Dialog open={isFormulasListOpen} onOpenChange={setIsFormulasListOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-accent" />
+              Fórmulas Terminadas - Villa Martelli
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Resumen */}
+            <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-accent">
+                <TrendingUp className="h-5 w-5" />
+                <span className="font-semibold">
+                  {formulasTerminadas.length} fórmulas terminadas
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Total de kilos producidos: {kilosDisponibles.toLocaleString()} kg
+              </p>
+            </div>
+
+            {/* Lista de fórmulas terminadas */}
+            <div className="max-h-96 overflow-y-auto">
+              {formulasTerminadas.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay fórmulas terminadas para Villa Martelli
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {formulasTerminadas.map((formula) => (
+                    <div
+                      key={formula.id}
+                      className="p-4 border border-accent/20 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors space-y-3"
+                    >
+                      {/* Información principal */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-lg text-accent truncate">
+                            {formula.name}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Cliente: {formula.clientName || 'Sin cliente'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium px-2 py-1 rounded-full bg-accent text-accent-foreground">
+                            Terminada
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información de producción */}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <FlaskConical className="h-4 w-4 text-accent" />
+                          <span className="font-medium">Lote:</span>
+                          <span className="text-accent font-semibold">
+                            {formula.batchSize || 0} kg
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Tipo:</span>
+                          <span className="truncate">{formula.type || 'Sin tipo'}</span>
+                        </div>
+                      </div>
+
+                      {/* Información adicional */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Fecha: {formula.date ? new Date(formula.date).toLocaleDateString() : 'Sin fecha'}</span>
+                        <span>Destino: {formula.destination || 'Sin destino'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Resumen final */}
+            <div className="text-sm text-muted-foreground text-center border-t pt-4">
+              Total de fórmulas terminadas: {formulasTerminadas.length} | Total de kilos: {kilosDisponibles.toLocaleString()} kg
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

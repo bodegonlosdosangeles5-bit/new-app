@@ -84,7 +84,7 @@ export const EnvioDetailModal = ({
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Número de Envío</p>
+                  <p className="text-sm font-medium text-muted-foreground">Número de Remito</p>
                   <p className="text-lg font-semibold">{envio.numero_envio}</p>
                 </div>
                 <div className="space-y-1">

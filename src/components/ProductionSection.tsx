@@ -303,7 +303,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
                 <Card key={envio.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-base sm:text-lg font-semibold">
-                      {envio.numero_envio}
+                      Número de Remito: {envio.numero_envio}
                     </CardTitle>
                     {envio.estado !== "pendiente" && (
                       <Badge variant={getStatusColor(envio.estado) as "default" | "secondary" | "destructive" | "outline"}>
