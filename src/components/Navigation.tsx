@@ -1,6 +1,7 @@
 import { BarChart3, Package, FlaskConical, Truck, Menu, X, LogOut, User, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/Logo";
 import { useState } from "react";
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
@@ -47,10 +48,7 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <FlaskConical className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">Planta Varela</span>
-          </div>
+          <Logo size="lg" />
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
