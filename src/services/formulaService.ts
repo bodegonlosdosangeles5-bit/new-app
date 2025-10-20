@@ -23,26 +23,14 @@ export interface Formula {
 }
 
 export class FormulaService {
-  // Obtener todas las fórmulas
+  // Obtener todas las fórmulas usando función segura
   static async getFormulas(): Promise<Formula[]> {
     try {
-      console.log('🔍 FormulaService.getFormulas - Iniciando consulta...');
+      console.log('🔍 FormulaService.getFormulas - Iniciando consulta segura...');
       
+      // Usar la función segura en lugar de consultar la vista directamente
       const { data: formulas, error } = await supabase
-        .from('formulas')
-        .select(`
-          id,
-          name,
-          batch_size,
-          status,
-          destination,
-          date,
-          type,
-          client_name,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false });
+        .rpc('get_formulas_complete');
 
       console.log('🔍 FormulaService.getFormulas - Respuesta de Supabase:', { formulas, error });
 
