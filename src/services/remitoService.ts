@@ -320,9 +320,15 @@ export class RemitoService {
         .eq('destino', 'Villa Martelli')
         .eq('fecha', today)
         .eq('estado', 'abierto')
-        .single();
+        .maybeSingle();
 
       if (remitoError && remitoError.code !== 'PGRST116') {
+        console.error('❌ Error obteniendo remito abierto:', remitoError);
+        // Si es un error 406, puede ser un problema de formato de fecha
+        if (remitoError.message?.includes('406')) {
+          console.log('⚠️ Error 406 detectado, verificando formato de fecha...');
+          console.log('📅 Fecha utilizada:', today);
+        }
         throw remitoError;
       }
 

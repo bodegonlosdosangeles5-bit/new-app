@@ -46,9 +46,9 @@ export const validateFormula = (formula: any): ValidationResult => {
   }
 
   // Validar estado
-  const validStatuses = ['available', 'incomplete', 'terminado', 'finalizado', 'completo'];
+  const validStatuses = ['available', 'incomplete'];
   if (!formula.status || !validStatuses.includes(formula.status)) {
-    errors.push('Estado debe ser uno de: available, incomplete, terminado, finalizado, completo');
+    errors.push('Estado debe ser uno de: available, incomplete');
   }
 
   // Validar tipo

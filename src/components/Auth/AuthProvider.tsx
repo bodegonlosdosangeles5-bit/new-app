@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthErrorHandler } from '@/hooks/useAuthErrorHandler';
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { handleAuthError, checkAuthStatus } = useAuthErrorHandler();
 
   useEffect(() => {
     // Obtener sesión inicial
@@ -37,6 +39,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Error obteniendo sesión inicial:', error);
+        handleAuthError(error);
       } else {
         setSession(session);
         setUser(session?.user ?? null);
@@ -85,7 +88,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      // Usar signOut local en lugar de global para evitar errores 403
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       return { error };
     } catch (error) {
       return { error: error as AuthError };

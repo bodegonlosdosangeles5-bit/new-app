@@ -171,6 +171,32 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================
+-- LIMPIAR ESTADOS INVALIDOS DE FORMULAS
+-- =============================================
+
+-- Actualizar fórmulas con estados inválidos a estados válidos
+UPDATE formulas 
+SET status = 'incomplete' 
+WHERE status NOT IN ('available', 'incomplete', 'procesado');
+
+-- Verificar que no queden estados inválidos
+DO $$
+DECLARE
+    invalid_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO invalid_count 
+    FROM formulas 
+    WHERE status NOT IN ('available', 'incomplete', 'procesado');
+    
+    IF invalid_count > 0 THEN
+        RAISE WARNING 'Aún existen % fórmulas con estados inválidos', invalid_count;
+    ELSE
+        RAISE NOTICE 'Todas las fórmulas tienen estados válidos';
+    END IF;
+END;
+$$;
+
+-- =============================================
 -- VERIFICACIÓN DE SEGURIDAD
 -- =============================================
 

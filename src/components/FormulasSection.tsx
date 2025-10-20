@@ -99,12 +99,12 @@ export const FormulasSection = ({
 
 
   const getFormulaStatus = (formula: any) => {
-    // Si la fórmula ya tiene un status definido, usarlo
-    if (formula.status) {
+    // Si la fórmula ya tiene un status definido y es válido, usarlo
+    if (formula.status && (formula.status === "available" || formula.status === "incomplete")) {
       return formula.status;
     }
     
-    // Si no tiene status, calcular basado en ingredientes faltantes
+    // Si no tiene status válido, calcular basado en ingredientes faltantes
     if (formula.missingIngredients && formula.missingIngredients.length > 0) {
       return "incomplete";
     }
@@ -119,7 +119,8 @@ export const FormulasSection = ({
       case "incomplete":
         return <XCircle className="h-6 w-6 text-white" />;
       default:
-        return <Clock className="h-6 w-6 text-white" />;
+        // Si no es un estado válido, tratar como incomplete
+        return <XCircle className="h-6 w-6 text-white" />;
     }
   };
 
@@ -130,7 +131,8 @@ export const FormulasSection = ({
       case "incomplete":
         return "❌ Faltante de materia prima";
       default:
-        return "⏳ En revisión";
+        // Si no es un estado válido, tratar como incomplete
+        return "❌ Faltante de materia prima";
     }
   };
 

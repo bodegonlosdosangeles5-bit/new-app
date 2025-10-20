@@ -23,19 +23,42 @@ export interface Formula {
 }
 
 export class FormulaService {
-  // Obtener todas las fórmulas usando función segura
+  // Obtener todas las fórmulas usando consulta directa con RLS
   static async getFormulas(): Promise<Formula[]> {
     try {
-      console.log('🔍 FormulaService.getFormulas - Iniciando consulta segura...');
+      console.log('🔍 FormulaService.getFormulas - Iniciando consulta directa...');
       
-      // Usar la función segura en lugar de consultar la vista directamente
+      // Consultar directamente la tabla formulas con RLS aplicado
       const { data: formulas, error } = await supabase
-        .rpc('get_formulas_complete');
+        .from('formulas')
+        .select(`
+          id,
+          name,
+          batch_size,
+          status,
+          destination,
+          date,
+          type,
+          client_name,
+          created_at,
+          updated_at
+        `)
+        .order('created_at', { ascending: false });
 
       console.log('🔍 FormulaService.getFormulas - Respuesta de Supabase:', { formulas, error });
 
       if (error) {
         console.error('❌ Error en consulta de fórmulas:', error);
+        // Si es un error 403, intentar recargar la sesión
+        if (error.message?.includes('403') || error.message?.includes('JWT')) {
+          console.log('🔄 Error de autenticación detectado, intentando recargar sesión...');
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.log('⚠️ No hay sesión activa, redirigiendo al login...');
+            window.location.href = '/login';
+            return [];
+          }
+        }
         throw error;
       }
 

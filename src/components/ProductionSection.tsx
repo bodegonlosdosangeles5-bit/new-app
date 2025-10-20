@@ -56,7 +56,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       const normalizedStatus = normalizeText(formula.status);
       const normalizedDestination = normalizeText(formula.destination);
       
-      const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
+      const isTerminated = normalizedStatus === 'available';
       const isVillaMartelli = normalizedDestination === 'villamartelli';
       const isNotProcessed = normalizedStatus !== 'procesado';
       
@@ -85,7 +85,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         const normalizedStatus = normalizeText(formula.status);
         const normalizedDestination = normalizeText(formula.destination);
         
-        const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
+        const isTerminated = normalizedStatus === 'available';
         const isVillaMartelli = normalizedDestination === 'villamartelli';
         const isNotProcessed = normalizedStatus !== 'procesado';
         

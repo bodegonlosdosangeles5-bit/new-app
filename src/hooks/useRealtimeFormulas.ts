@@ -59,7 +59,7 @@ export const useRealtimeFormulas = () => {
       const villaMartelliFormulas = data?.filter(formula => {
         const normalizedDestination = formula.destination?.toLowerCase().replace(/\s+/g, '') || '';
         const normalizedStatus = formula.status?.toLowerCase().replace(/\s+/g, '') || '';
-        const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
+        const isTerminated = normalizedStatus === 'available';
         const isVillaMartelli = normalizedDestination === 'villamartelli';
         const isNotProcessed = normalizedStatus !== 'procesado';
         return isTerminated && isVillaMartelli && isNotProcessed;
