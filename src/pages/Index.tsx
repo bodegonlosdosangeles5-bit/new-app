@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { InventorySection } from "@/components/InventorySection";
 import { FormulasSection } from "@/components/FormulasSection";
@@ -77,13 +78,9 @@ const Index = () => {
           <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
           
           <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
-            <div className="mb-6 sm:mb-8 text-center">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-primary mb-2">
-                Control de Producción
-              </h1>
-              <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
-                Gestión integral de inventario y formulación
-              </p>
+            {/* Dashboard Header with Date/Time */}
+            <div className="mb-6 sm:mb-8">
+              <DashboardHeader />
             </div>
             
             <div className="px-8 sm:px-12 lg:px-16 xl:px-24">

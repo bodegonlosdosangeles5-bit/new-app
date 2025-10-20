@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { MobileUserIndicator } from "@/components/MobileUserIndicator";
+import { DateTimeDisplay } from "@/components/DateTimeDisplay";
 import { useState } from "react";
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
@@ -47,9 +48,15 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
   return (
     <nav className="sticky top-0 z-50 bg-card/90 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4">
+        {/* Top row with logo and date/time */}
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Logo size="lg" />
+          
+          {/* Desktop Date/Time */}
+          <div className="hidden lg:flex">
+            <DateTimeDisplay format="compact" />
+          </div>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
@@ -101,6 +108,10 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
           {/* Mobile Menu Button and Theme Toggle */}
           <div className="md:hidden flex items-center space-x-2">
             <ThemeToggle />
+            {/* Compact date/time for mobile */}
+            <div className="hidden sm:flex">
+              <DateTimeDisplay format="minimal" />
+            </div>
             <MobileUserIndicator />
             <Button
               variant="ghost"
@@ -121,6 +132,11 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border bg-card/95 backdrop-blur-sm">
             <div className="py-4 space-y-1">
+              {/* Date/Time for Mobile */}
+              <div className="px-2 pb-3 border-b border-border/50">
+                <DateTimeDisplay format="full" />
+              </div>
+              
               {/* Navigation Items */}
               <div className="px-2 space-y-1">
                 {navItems.map((item) => {
