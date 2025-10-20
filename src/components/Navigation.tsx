@@ -48,15 +48,10 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
   return (
     <nav className="sticky top-0 z-50 bg-card/90 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4">
-        {/* Top row with logo and date/time */}
+        {/* Top row with logo and navigation */}
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Logo size="lg" />
-          
-          {/* Desktop Date/Time */}
-          <div className="hidden lg:flex">
-            <DateTimeDisplay format="compact" />
-          </div>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
