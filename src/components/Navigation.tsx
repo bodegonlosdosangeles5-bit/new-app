@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { MobileUserIndicator } from "@/components/MobileUserIndicator";
 import { DateTimeDisplay } from "@/components/DateTimeDisplay";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
 
@@ -15,8 +15,19 @@ interface NavigationProps {
 
 export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const { user, signOut } = useAuth();
   const { isInstallable, isInstalled, installApp } = usePWA();
+
+  // Efecto para manejar la animación de cierre
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      setIsAnimating(true);
+    } else {
+      const timer = setTimeout(() => setIsAnimating(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobileMenuOpen]);
   
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -112,38 +123,64 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="relative"
+              className="relative transition-all duration-300 ease-in-out hover:scale-105"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              <div className="relative w-5 h-5">
+                <Menu 
+                  className={`h-5 w-5 absolute transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen 
+                      ? 'opacity-0 rotate-180 scale-0' 
+                      : 'opacity-100 rotate-0 scale-100'
+                  }`} 
+                />
+                <X 
+                  className={`h-5 w-5 absolute transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen 
+                      ? 'opacity-100 rotate-0 scale-100' 
+                      : 'opacity-0 -rotate-180 scale-0'
+                  }`} 
+                />
+              </div>
             </Button>
           </div>
         </div>
 
         {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card/95 backdrop-blur-sm">
+        {(isMobileMenuOpen || isAnimating) && (
+          <div className={`md:hidden border-t border-border bg-card/95 backdrop-blur-sm transition-all duration-300 ease-in-out overflow-hidden ${
+            isMobileMenuOpen 
+              ? 'max-h-screen opacity-100 translate-y-0' 
+              : 'max-h-0 opacity-0 -translate-y-4'
+          }`}>
             <div className="py-4 space-y-1">
               {/* Date/Time for Mobile */}
-              <div className="px-2 pb-3 border-b border-border/50">
+              <div className={`px-2 pb-3 border-b border-border/50 transition-all duration-500 ease-out ${
+                isMobileMenuOpen 
+                  ? 'opacity-100 translate-x-0' 
+                  : 'opacity-0 -translate-x-4'
+              }`} style={{ transitionDelay: isMobileMenuOpen ? '100ms' : '0ms' }}>
                 <DateTimeDisplay format="full" />
               </div>
               
               {/* Navigation Items */}
               <div className="px-2 space-y-1">
-                {navItems.map((item) => {
+                {navItems.map((item, index) => {
                   const Icon = item.icon;
                   return (
                     <Button
                       key={item.id}
                       variant={activeSection === item.id ? "default" : "ghost"}
                       onClick={() => handleNavClick(item.id)}
-                      className="w-full justify-start space-x-3 h-12"
+                      className={`w-full justify-start space-x-3 h-12 transition-all duration-500 ease-out hover:scale-[1.02] hover:shadow-md ${
+                        isMobileMenuOpen 
+                          ? 'opacity-100 translate-x-0' 
+                          : 'opacity-0 -translate-x-4'
+                      }`}
+                      style={{ 
+                        transitionDelay: isMobileMenuOpen ? `${150 + (index * 100)}ms` : '0ms' 
+                      }}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-5 w-5 transition-transform duration-200 ease-in-out group-hover:scale-110" />
                       <span className="text-base">{item.label}</span>
                     </Button>
                   );
@@ -151,29 +188,41 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
               </div>
               
               {/* Separator */}
-              <div className="border-t border-border my-3"></div>
+              <div className={`border-t border-border my-3 transition-all duration-500 ease-out ${
+                isMobileMenuOpen 
+                  ? 'opacity-100 scale-x-100' 
+                  : 'opacity-0 scale-x-0'
+              }`} style={{ transitionDelay: isMobileMenuOpen ? '600ms' : '0ms' }}></div>
               
               {/* Install App Button for Mobile */}
               {isInstallable && !isInstalled && (
-                <div className="px-2">
+                <div className={`px-2 transition-all duration-500 ease-out ${
+                  isMobileMenuOpen 
+                    ? 'opacity-100 translate-x-0' 
+                    : 'opacity-0 -translate-x-4'
+                }`} style={{ transitionDelay: isMobileMenuOpen ? '700ms' : '0ms' }}>
                   <Button
                     variant="outline"
                     onClick={handleInstallApp}
-                    className="w-full justify-start space-x-3 h-12"
+                    className="w-full justify-start space-x-3 h-12 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-md"
                   >
-                    <Download className="h-5 w-5" />
+                    <Download className="h-5 w-5 transition-transform duration-200 ease-in-out group-hover:scale-110" />
                     <span className="text-base">Instalar App</span>
                   </Button>
                 </div>
               )}
               
               {/* User Info and Logout for Mobile */}
-              <div className="px-2 space-y-2">
+              <div className={`px-2 space-y-2 transition-all duration-500 ease-out ${
+                isMobileMenuOpen 
+                  ? 'opacity-100 translate-x-0' 
+                  : 'opacity-0 -translate-x-4'
+              }`} style={{ transitionDelay: isMobileMenuOpen ? '800ms' : '0ms' }}>
                 {/* User Info */}
-                <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg transition-all duration-300 ease-in-out hover:bg-muted/70 hover:scale-[1.01]">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out hover:bg-primary/20 hover:scale-110">
+                      <User className="h-4 w-4 text-primary transition-transform duration-200 ease-in-out" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -190,9 +239,9 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                 <Button
                   variant="destructive"
                   onClick={handleSignOut}
-                  className="w-full justify-start space-x-3 h-12"
+                  className="w-full justify-start space-x-3 h-12 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:shadow-destructive/25"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-5 w-5 transition-transform duration-200 ease-in-out group-hover:scale-110" />
                   <span className="text-base">Cerrar Sesión</span>
                 </Button>
               </div>
