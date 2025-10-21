@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
+import { UserService } from "@/services/userService";
 
 interface NavigationProps {
   activeSection: string;
@@ -17,6 +18,7 @@ interface NavigationProps {
 export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, signOut } = useAuth();
   const { isInstallable, isInstalled, installApp } = usePWA();
 
@@ -29,14 +31,36 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
       return () => clearTimeout(timer);
     }
   }, [isMobileMenuOpen]);
+
+  // Efecto para verificar si el usuario es admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const adminStatus = await UserService.isCurrentUserAdmin();
+        setIsAdmin(adminStatus);
+      } catch (error) {
+        console.error('Error verificando rol de administrador:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    if (user) {
+      checkAdminStatus();
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
   
-  const navItems = [
+  const allNavItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "inventory", label: "Inventario", icon: Package },
     { id: "formulas", label: "Fórmulas", icon: FlaskConical },
     { id: "production", label: "Producción", icon: Truck },
-    { id: "users", label: "Usuarios", icon: Users },
+    { id: "users", label: "Usuarios", icon: Users, adminOnly: true },
   ];
+
+  // Filtrar elementos de navegación basándose en el rol del usuario
+  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleNavClick = (section: string) => {
     onSectionChange(section);
@@ -97,15 +121,17 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                 <Button variant="ghost" size="sm" className="flex items-center space-x-2 px-3">
                   <User className="h-4 w-4" />
                   <span className="hidden lg:inline text-sm truncate max-w-32">
-                    {user?.email?.split('@')[0]}
+                    {user?.user_name}
                   </span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.email}</p>
-                  <p className="text-xs text-muted-foreground">Usuario activo</p>
+                  <p className="text-sm font-medium">{user?.user_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.role === 'admin' ? 'Administrador' : 'Usuario'}
+                  </p>
                 </div>
                 <DropdownMenuSeparator />
                 {isInstallable && !isInstalled && (
@@ -235,10 +261,10 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
-                      {user?.email?.split('@')[0]}
+                      {user?.user_name}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {user?.email}
+                      {user?.role === 'admin' ? 'Administrador' : 'Usuario'}
                     </p>
                   </div>
                 </div>

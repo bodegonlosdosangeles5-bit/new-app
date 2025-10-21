@@ -5,17 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Lock, User } from 'lucide-react';
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { signIn, resetPassword } = useAuth();
+  const { signIn } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,14 +24,14 @@ export const LoginForm: React.FC = () => {
     setSuccess(null);
 
     // Validación básica
-    if (!email || !password) {
+    if (!username || !password) {
       setError('Por favor completa todos los campos');
       setLoading(false);
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Por favor ingresa un email válido');
+    if (username.length < 3) {
+      setError('El nombre de usuario debe tener al menos 3 caracteres');
       setLoading(false);
       return;
     }
@@ -43,10 +43,10 @@ export const LoginForm: React.FC = () => {
     }
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(username, password);
       
       if (error) {
-        setError(error.message);
+        setError(error);
       } else {
         setSuccess('¡Inicio de sesión exitoso!');
       }
@@ -58,35 +58,6 @@ export const LoginForm: React.FC = () => {
   };
 
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setError('Por favor ingresa tu email primero');
-      return;
-    }
-
-    if (!email.includes('@')) {
-      setError('Por favor ingresa un email válido');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const { error } = await resetPassword(email);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('¡Email de recuperación enviado! Revisa tu bandeja de entrada.');
-      }
-    } catch (err) {
-      setError('Error inesperado. Por favor intenta de nuevo.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
@@ -102,15 +73,15 @@ export const LoginForm: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Usuario</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="tu_usuario"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -176,17 +147,6 @@ export const LoginForm: React.FC = () => {
 
             </div>
 
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={handleResetPassword}
-                disabled={loading}
-                className="text-sm"
-              >
-                ¿Olvidaste tu contraseña?
-              </Button>
-            </div>
           </form>
         </CardContent>
       </Card>

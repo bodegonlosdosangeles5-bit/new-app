@@ -1,53 +1,44 @@
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseAdmin } from '@/integrations/supabase/admin';
-import { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
-  email: string;
+  user_name: string;
+  role: string;
   created_at: string;
-  last_sign_in_at: string | null;
-  email_confirmed_at: string | null;
-  is_active: boolean;
-  role?: string;
-  full_name?: string;
+  updated_at: string;
 }
 
 export interface CreateUserData {
+  user_name: string;
   password: string;
-  full_name?: string;
   role?: string;
 }
 
 export interface UpdateUserData {
-  email?: string;
-  full_name?: string;
+  user_name?: string;
+  password?: string;
   role?: string;
-  is_active?: boolean;
 }
 
 export class UserService {
   /**
-   * Obtener todos los usuarios del sistema usando la función de base de datos
+   * Obtener todos los usuarios del sistema
    */
   static async getUsers(): Promise<UserProfile[]> {
     try {
-      const { data, error } = await supabase.rpc('get_all_users_with_details');
+      const { data, error } = await supabase.rpc('get_all_users');
       
       if (error) {
         console.error('Error obteniendo usuarios:', error);
         throw new Error('Error al obtener usuarios');
       }
 
-      return data.map((user: any) => ({
+      return (data as any[]).map((user: any) => ({
         id: user.id,
-        email: user.email || '',
+        user_name: user.user_name,
+        role: user.role,
         created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at,
-        email_confirmed_at: user.email_confirmed_at,
-        is_active: user.is_active,
-        role: user.role || 'user',
-        full_name: user.full_name || ''
+        updated_at: user.updated_at
       }));
     } catch (error) {
       console.error('Error en getUsers:', error);
@@ -56,21 +47,14 @@ export class UserService {
   }
 
   /**
-   * Crear un nuevo usuario usando la función de base de datos
+   * Crear un nuevo usuario
    */
-  static async createUser(userData: CreateUserData): Promise<UserProfile> {
+  static async createUser(createUserData: CreateUserData): Promise<UserProfile> {
     try {
-      // Generar email automáticamente basado en el nombre de usuario
-      const username = userData.full_name || 'usuario';
-      const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const generatedEmail = `${cleanUsername}@planta.local`;
-      
-      // Crear usuario usando la función de base de datos
-      const { data, error } = await supabase.rpc('create_complete_user', {
-        p_email: generatedEmail,
-        p_password: userData.password,
-        p_full_name: userData.full_name || '',
-        p_role: userData.role || 'user'
+      const { data, error } = await supabase.rpc('create_user', {
+        username_param: createUserData.user_name,
+        password_param: createUserData.password,
+        role_param: createUserData.role || 'user'
       });
 
       if (error) {
@@ -78,19 +62,27 @@ export class UserService {
         throw new Error(`Error al crear usuario: ${error.message}`);
       }
 
-      if (!data) {
-        throw new Error('No se pudo crear el usuario');
+      const result = data as any;
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
+      // Obtener el usuario creado
+      const { data: createdUserData, error: getUserError } = await supabase.rpc('get_user_by_id', {
+        user_id_param: result.user_id
+      });
+
+      if (getUserError || !(createdUserData as any).success) {
+        throw new Error('Error obteniendo usuario creado');
+      }
+
+      const userResult = createdUserData as any;
       return {
-        id: data.id,
-        email: data.email || '',
-        created_at: data.created_at,
-        last_sign_in_at: null,
-        email_confirmed_at: data.created_at,
-        is_active: data.is_active,
-        role: data.role || 'user',
-        full_name: data.full_name || ''
+        id: userResult.id,
+        user_name: userResult.user_name,
+        role: userResult.role,
+        created_at: userResult.created_at,
+        updated_at: userResult.updated_at
       };
     } catch (error) {
       console.error('Error en createUser:', error);
@@ -99,17 +91,15 @@ export class UserService {
   }
 
   /**
-   * Actualizar un usuario existente usando función de base de datos
+   * Actualizar un usuario existente
    */
   static async updateUser(userId: string, updates: UpdateUserData): Promise<UserProfile> {
     try {
-      // Usar la función de base de datos para actualizar usuario
-      const { data, error } = await supabase.rpc('update_complete_user', {
-        p_user_id: userId,
-        p_email: updates.email || null,
-        p_full_name: updates.full_name || null,
-        p_role: updates.role || null,
-        p_is_active: updates.is_active !== undefined ? updates.is_active : null
+      const { data, error } = await supabase.rpc('update_user', {
+        user_id_param: userId,
+        new_username: updates.user_name || null,
+        new_password: updates.password || null,
+        new_role: updates.role || null
       });
 
       if (error) {
@@ -117,19 +107,17 @@ export class UserService {
         throw new Error(`Error al actualizar usuario: ${error.message}`);
       }
 
-      if (!data) {
-        throw new Error('No se pudo actualizar el usuario');
+      const result = data as any;
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       return {
-        id: data.id,
-        email: data.email || '',
-        created_at: data.created_at,
-        last_sign_in_at: data.last_sign_in_at,
-        email_confirmed_at: data.email_confirmed_at,
-        is_active: data.is_active,
-        role: data.role || 'user',
-        full_name: data.full_name || ''
+        id: result.id,
+        user_name: result.user_name,
+        role: result.role,
+        created_at: result.created_at,
+        updated_at: result.updated_at
       };
     } catch (error) {
       console.error('Error en updateUser:', error);
@@ -138,13 +126,12 @@ export class UserService {
   }
 
   /**
-   * Eliminar un usuario usando función de base de datos
+   * Eliminar un usuario
    */
   static async deleteUser(userId: string): Promise<boolean> {
     try {
-      // Usar la función de base de datos para eliminar usuario completo
-      const { data, error } = await supabase.rpc('delete_complete_user', {
-        p_user_id: userId
+      const { data, error } = await supabase.rpc('delete_user', {
+        user_id_param: userId
       });
 
       if (error) {
@@ -152,7 +139,8 @@ export class UserService {
         throw new Error(`Error al eliminar usuario: ${error.message}`);
       }
 
-      return data === true;
+      const result = data as any;
+      return result.success;
     } catch (error) {
       console.error('Error en deleteUser:', error);
       throw error;
@@ -160,13 +148,14 @@ export class UserService {
   }
 
   /**
-   * Cambiar contraseña de un usuario usando función de base de datos
+   * Cambiar contraseña de un usuario
    */
   static async resetUserPassword(userId: string, newPassword: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('change_user_password', {
-        p_user_id: userId,
-        p_new_password: newPassword
+      const { data, error } = await supabase.rpc('update_user', {
+        user_id_param: userId,
+        new_username: null,
+        new_password: newPassword
       });
 
       if (error) {
@@ -174,7 +163,8 @@ export class UserService {
         throw new Error(`Error al cambiar contraseña: ${error.message}`);
       }
 
-      return data === true;
+      const result = data as any;
+      return result.success;
     } catch (error) {
       console.error('Error en resetUserPassword:', error);
       throw error;
@@ -182,16 +172,13 @@ export class UserService {
   }
 
   /**
-   * Obtener estadísticas de usuarios usando la función de base de datos
+   * Obtener estadísticas de usuarios
    */
   static async getUserStats(): Promise<{
     total: number;
-    active: number;
-    inactive: number;
-    confirmed: number;
-    unconfirmed: number;
-    admins: number;
     users: number;
+    admins: number;
+    users_role: number;
   }> {
     try {
       const { data, error } = await supabase.rpc('get_user_stats');
@@ -201,14 +188,12 @@ export class UserService {
         throw new Error('Error al obtener estadísticas');
       }
 
+      const result = data as any;
       return {
-        total: data.total || 0,
-        active: data.active || 0,
-        inactive: data.inactive || 0,
-        confirmed: data.confirmed || 0,
-        unconfirmed: data.unconfirmed || 0,
-        admins: data.admins || 0,
-        users: data.users || 0
+        total: result.total || 0,
+        users: result.users || 0,
+        admins: result.admins || 0,
+        users_role: result.users_role || 0
       };
     } catch (error) {
       console.error('Error en getUserStats:', error);
@@ -221,22 +206,13 @@ export class UserService {
    */
   static async isCurrentUserAdmin(): Promise<boolean> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        return false;
+      }
       
-      if (!user) {
-        return false;
-      }
-
-      const { data, error } = await supabase.rpc('is_user_admin', {
-        p_user_id: user.id
-      });
-
-      if (error) {
-        console.error('Error verificando rol de administrador:', error);
-        return false;
-      }
-
-      return data === true;
+      const user = JSON.parse(userData);
+      return user.role === 'admin';
     } catch (error) {
       console.error('Error en isCurrentUserAdmin:', error);
       return false;
