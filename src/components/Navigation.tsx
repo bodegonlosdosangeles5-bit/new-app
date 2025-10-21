@@ -1,9 +1,10 @@
-import { BarChart3, Package, FlaskConical, Truck, Menu, X, LogOut, User, Download } from "lucide-react";
+import { BarChart3, Package, FlaskConical, Truck, Menu, X, LogOut, User, Download, Users, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { MobileUserIndicator } from "@/components/MobileUserIndicator";
 import { DateTimeDisplay } from "@/components/DateTimeDisplay";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
@@ -33,8 +34,9 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "inventory", label: "Inventario", icon: Package },
     { id: "formulas", label: "Fórmulas", icon: FlaskConical },
-  { id: "production", label: "Producción", icon: Truck },
-];
+    { id: "production", label: "Producción", icon: Truck },
+    { id: "users", label: "Usuarios", icon: Users },
+  ];
 
   const handleNavClick = (section: string) => {
     onSectionChange(section);
@@ -65,7 +67,8 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
           <Logo size="lg" />
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center space-x-1">
+            {/* Main Navigation Items */}
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -73,51 +76,58 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                   key={item.id}
                   variant={activeSection === item.id ? "default" : "ghost"}
                   onClick={() => onSectionChange(item.id)}
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 px-3"
+                  size="sm"
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
+                  <span className="hidden lg:inline">{item.label}</span>
                 </Button>
               );
             })}
-                <ThemeToggle />
-                {/* Install App Button */}
-                {isInstallable && !isInstalled && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleInstallApp}
-                    className="flex items-center space-x-1"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span>Instalar App</span>
-                  </Button>
-                )}
-                {/* User info and logout */}
-                <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-border">
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    <span>{user?.email}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSignOut}
-                    className="flex items-center space-x-1"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Cerrar Sesión</span>
-                  </Button>
+            
+            {/* Separator */}
+            <div className="h-6 w-px bg-border mx-2"></div>
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center space-x-2 px-3">
+                  <User className="h-4 w-4" />
+                  <span className="hidden lg:inline text-sm truncate max-w-32">
+                    {user?.email?.split('@')[0]}
+                  </span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground">Usuario activo</p>
                 </div>
+                <DropdownMenuSeparator />
+                {isInstallable && !isInstalled && (
+                  <>
+                    <DropdownMenuItem onClick={handleInstallApp} className="flex items-center space-x-2">
+                      <Download className="h-4 w-4" />
+                      <span>Instalar App</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={handleSignOut} className="flex items-center space-x-2 text-red-600">
+                  <LogOut className="h-4 w-4" />
+                  <span>Cerrar Sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Menu Button and Theme Toggle */}
           <div className="md:hidden flex items-center space-x-2">
             <ThemeToggle />
-            {/* Compact date/time for mobile */}
-            <div className="hidden sm:flex">
-              <DateTimeDisplay format="minimal" />
-            </div>
             <MobileUserIndicator />
             <Button
               variant="ghost"
@@ -154,7 +164,7 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
           }`}>
             <div className="py-4 space-y-1">
               {/* Date/Time for Mobile */}
-              <div className={`px-2 pb-3 border-b border-border/50 transition-all duration-500 ease-out ${
+              <div className={`px-4 py-2 bg-muted/30 transition-all duration-500 ease-out ${
                 isMobileMenuOpen 
                   ? 'opacity-100 translate-x-0' 
                   : 'opacity-0 -translate-x-4'
@@ -212,18 +222,16 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                 </div>
               )}
               
-              {/* User Info and Logout for Mobile */}
+              {/* User Actions for Mobile */}
               <div className={`px-2 space-y-2 transition-all duration-500 ease-out ${
                 isMobileMenuOpen 
                   ? 'opacity-100 translate-x-0' 
                   : 'opacity-0 -translate-x-4'
               }`} style={{ transitionDelay: isMobileMenuOpen ? '800ms' : '0ms' }}>
                 {/* User Info */}
-                <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg transition-all duration-300 ease-in-out hover:bg-muted/70 hover:scale-[1.01]">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out hover:bg-primary/20 hover:scale-110">
-                      <User className="h-4 w-4 text-primary transition-transform duration-200 ease-in-out" />
-                    </div>
+                <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
@@ -235,15 +243,28 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
                   </div>
                 </div>
                 
-                {/* Logout Button */}
-                <Button
-                  variant="destructive"
-                  onClick={handleSignOut}
-                  className="w-full justify-start space-x-3 h-12 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:shadow-destructive/25"
-                >
-                  <LogOut className="h-5 w-5 transition-transform duration-200 ease-in-out group-hover:scale-110" />
-                  <span className="text-base">Cerrar Sesión</span>
-                </Button>
+                {/* Actions */}
+                <div className="space-y-1">
+                  {isInstallable && !isInstalled && (
+                    <Button
+                      variant="outline"
+                      onClick={handleInstallApp}
+                      className="w-full justify-start space-x-3 h-10"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Instalar App</span>
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant="destructive"
+                    onClick={handleSignOut}
+                    className="w-full justify-start space-x-3 h-10"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

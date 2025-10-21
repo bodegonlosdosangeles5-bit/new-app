@@ -15,7 +15,7 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, resetPassword } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,45 +57,6 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    // Validación básica
-    if (!email || !password) {
-      setError('Por favor completa todos los campos');
-      setLoading(false);
-      return;
-    }
-
-    if (!email.includes('@')) {
-      setError('Por favor ingresa un email válido');
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { error } = await signUp(email, password);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('¡Cuenta creada! Revisa tu email para confirmar tu cuenta.');
-      }
-    } catch (err) {
-      setError('Error inesperado. Por favor intenta de nuevo.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -213,22 +174,6 @@ export const LoginForm: React.FC = () => {
                 )}
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleSignUp}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creando cuenta...
-                  </>
-                ) : (
-                  'Crear Cuenta'
-                )}
-              </Button>
             </div>
 
             <div className="text-center">

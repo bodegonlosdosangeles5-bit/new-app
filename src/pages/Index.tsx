@@ -5,6 +5,7 @@ import { DashboardMetrics } from "@/components/DashboardMetrics";
 import { InventorySection } from "@/components/InventorySection";
 import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
+import { UserAdminPanel } from "@/components/UserAdminPanel";
 import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
 import { Formula } from "@/services/formulaService";
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
@@ -63,6 +64,8 @@ const Index = () => {
         />;
       case "production":
         return <ProductionSection formulas={formulas as Formula[]} />;
+      case "users":
+        return <UserAdminPanel />;
       default:
         return <DashboardMetrics 
           formulas={formulas as Formula[]} 

@@ -538,24 +538,24 @@ export const FormulasSection = ({
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-base font-semibold flex items-center space-x-2 text-white">
-                      <Beaker className="h-6 w-6 text-white" />
+                    <CardTitle className="text-base font-semibold flex items-center space-x-2 text-foreground dark:text-white">
+                      <Beaker className="h-6 w-6 text-foreground dark:text-white" />
                       <span>{formula.name}</span>
                     </CardTitle>
-                    <p className="text-base text-white mt-1">
+                    <p className="text-base text-foreground dark:text-white mt-1">
                       Lote: {formula.id} • Cantidad: {formula.batchSize} kg
                     </p>
-                    <p className="text-base text-white font-medium mt-1">
+                    <p className="text-base text-foreground dark:text-white font-medium mt-1">
                       Destino: {formula.destination}
                     </p>
-                    <p className="text-sm text-white/80 mt-1">
+                    <p className="text-sm text-muted-foreground dark:text-white/80 mt-1">
                       Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric'
                       }) : 'No especificada'}
                     </p>
-                    <p className="text-sm text-white/80 mt-1">
+                    <p className="text-sm text-muted-foreground dark:text-white/80 mt-1">
                       Para: {formula.type === "client" ? "Cliente" : "Stock"}
                       {formula.type === "client" && formula.clientName && ` - ${formula.clientName}`}
                     </p>
@@ -579,7 +579,7 @@ export const FormulasSection = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <XCircle className="h-5 w-5 text-red-400" />
-                        <h4 className="text-lg font-semibold text-white">
+                        <h4 className="text-lg font-semibold text-foreground dark:text-white">
                           Materias Primas Faltantes
                         </h4>
                         {formula.missingIngredients && formula.missingIngredients.length > 0 && (
@@ -593,7 +593,7 @@ export const FormulasSection = ({
                         variant="outline"
                         size="sm"
                         onClick={() => handleAddIngredient(formula)}
-                        className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black transition-colors"
+                        className="flex items-center gap-2 text-foreground dark:text-white border-border dark:border-white hover:bg-muted dark:hover:bg-white hover:text-foreground dark:hover:text-black transition-colors"
                       >
                         <Plus className="h-4 w-4" />
                         Agregar
@@ -608,11 +608,11 @@ export const FormulasSection = ({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Package className="h-4 w-4 text-red-400 flex-shrink-0" />
-                                <p className="text-base font-semibold text-white truncate" title={ingredient.name}>
+                                <p className="text-base font-semibold text-foreground dark:text-white truncate" title={ingredient.name}>
                                   {ingredient.name}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-2 text-sm text-white/90">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-white/90">
                                 <span className="font-medium">Cantidad faltante:</span>
                                 <span className="bg-red-500/20 px-2 py-1 rounded text-red-200 font-mono">
                                   {ingredient.required} {ingredient.unit}
@@ -635,19 +635,19 @@ export const FormulasSection = ({
                         {/* Indicador de scroll si hay muchos ingredientes */}
                         {formula.missingIngredients.length > 4 && (
                           <div className="text-center py-2">
-                            <p className="text-xs text-white/60">
+                            <p className="text-xs text-muted-foreground dark:text-white/60">
                               ↑ Desplázate para ver todos los ingredientes ({formula.missingIngredients.length} total)
                             </p>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-center py-6 bg-white/5 rounded-lg border border-white/10">
-                        <Package className="h-12 w-12 text-white/40 mx-auto mb-3" />
-                        <p className="text-white/80 text-base font-medium mb-2">
+                      <div className="text-center py-6 bg-muted/50 dark:bg-white/5 rounded-lg border border-border dark:border-white/10">
+                        <Package className="h-12 w-12 text-muted-foreground dark:text-white/40 mx-auto mb-3" />
+                        <p className="text-foreground dark:text-white/80 text-base font-medium mb-2">
                           No hay materias primas faltantes registradas
                         </p>
-                        <p className="text-white/60 text-sm mb-4">
+                        <p className="text-muted-foreground dark:text-white/60 text-sm mb-4">
                           Esta fórmula está marcada como incompleta pero no tiene ingredientes faltantes registrados
                         </p>
                         <Button
@@ -655,7 +655,7 @@ export const FormulasSection = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleAddIngredient(formula)}
-                          className="text-white border-white hover:bg-white hover:text-black"
+                          className="text-foreground dark:text-white border-border dark:border-white hover:bg-muted dark:hover:bg-white hover:text-foreground dark:hover:text-black"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Agregar Primera Materia Prima
@@ -668,7 +668,7 @@ export const FormulasSection = ({
                 {actualStatus === "available" && (
                   <div className="text-center py-4">
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-base text-white font-medium">
+                    <p className="text-base text-foreground dark:text-white font-medium">
                       Terminada
                     </p>
                   </div>
