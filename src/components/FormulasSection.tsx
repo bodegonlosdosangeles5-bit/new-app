@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FormulaService } from "@/services/formulaService";
+import { ProductoService } from "@/services/productoService";
+import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
 
 interface FormulasSectionProps {
-  formulas: any[];
-  setFormulas: (formulas: any[]) => void;
+  formulas?: any[]; // Mantener para compatibilidad pero no usar
+  setFormulas?: (formulas: any[]) => void; // Mantener para compatibilidad pero no usar
   createFormula?: (formula: any) => Promise<any>;
   updateFormula?: (id: string, updates: any) => Promise<any>;
   deleteFormula?: (id: string) => Promise<boolean>;
@@ -25,17 +26,34 @@ interface FormulasSectionProps {
 }
 
 export const FormulasSection = ({ 
-  formulas, 
-  setFormulas, 
+  formulas = [], 
+  setFormulas = () => {}, 
   createFormula, 
   updateFormula, 
   deleteFormula,
   addMissingIngredient,
   removeMissingIngredient,
   updateIncompleteFormulasStatus,
-  loading = false,
-  error = null
+  loading: propLoading = false,
+  error: propError = null
 }: FormulasSectionProps) => {
+  // Usar el hook de productos en tiempo real
+  const { 
+    productos, 
+    loading: productosLoading, 
+    error: productosError,
+    createProducto,
+    updateProducto,
+    deleteProducto,
+    addMissingIngredient: addMissingIngredientReal,
+    removeMissingIngredient: removeMissingIngredientReal,
+    updateIncompleteProductosStatus
+  } = useRealtimeProductos();
+
+  // Usar los datos del hook en tiempo real o los props como fallback
+  const formulasData = productos.length > 0 ? productos : formulas;
+  const loading = productosLoading || propLoading;
+  const error = productosError || propError;
   const [selectedFormula, setSelectedFormula] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingFormula, setEditingFormula] = useState<any>(null);
@@ -73,8 +91,8 @@ export const FormulasSection = ({
   });
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  // Usar las fórmulas pasadas como prop
-  const currentFormulas = formulas;
+  // Usar los productos del hook en tiempo real
+  const currentFormulas = formulasData;
   
   // Logging para debug
   console.log('📋 FormulasSection - Props recibidas:', { 
@@ -226,8 +244,9 @@ export const FormulasSection = ({
   const handleLoadFormula = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!createFormula) {
-      console.error('No hay función createFormula disponible');
+    const createFunction = createProducto || createFormula;
+    if (!createFunction) {
+      console.error('No hay función createProducto disponible');
       return;
     }
 
@@ -251,15 +270,16 @@ export const FormulasSection = ({
         id: newFormula.lot // Usar el lote como ID
       };
 
-      console.log('🔄 Creando fórmula con datos:', formulaData);
-      await createFormula(formulaData);
+      console.log('🔄 Creando producto con datos:', formulaData);
+      await createFunction(formulaData);
       
       // Si es incompleta y tiene ingredientes faltantes, agregarlos a Supabase
       if (newFormula.status === 'incomplete' && missingIngredients.length > 0) {
         console.log('📝 Agregando ingredientes faltantes a Supabase...');
         for (const ingredient of missingIngredients) {
-          if (addMissingIngredient) {
-            await addMissingIngredient(newFormula.lot, {
+          const addFunction = addMissingIngredientReal || addMissingIngredient;
+          if (addFunction) {
+            await addFunction(newFormula.lot, {
               name: ingredient.name,
               required: parseFloat(ingredient.required),
               unit: ingredient.unit

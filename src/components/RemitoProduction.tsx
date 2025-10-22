@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRealtimeRemitos } from "@/hooks/useRealtimeRemitos";
+import { useRemitosPolling } from "@/hooks/useRemitosPolling";
 import { ProductionItem } from "@/services/remitoService";
 
 interface RemitoProductionProps {
@@ -16,12 +17,16 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
+  const realtimeHook = useRealtimeRemitos();
+  const pollingHook = useRemitosPolling();
+  
+  // Usar polling si hay error de Realtime, sino usar Realtime
   const {
     currentRemito,
     loading,
     error,
     generateRemitoForVillaMartelli
-  } = useRealtimeRemitos();
+  } = realtimeHook.realtimeError ? pollingHook : realtimeHook;
 
   // Filtrar items de Villa Martelli
   const villaMartelliItems = useMemo(() => {
@@ -240,17 +245,6 @@ export const RemitoProduction = ({ productionItems }: RemitoProductionProps) => 
                     <Square className="h-4 w-4" />
                   )}
                   {selectedItems.size === villaMartelliItems.length ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    console.log('🔍 Debug - Selected items:', Array.from(selectedItems));
-                    console.log('🔍 Debug - Villa Martelli items:', villaMartelliItems.map(item => item.id));
-                  }}
-                  className="text-xs"
-                >
-                  Debug
                 </Button>
               </div>
             )}

@@ -7,6 +7,8 @@ export const useRealtimeRemitos = () => {
   const [currentRemito, setCurrentRemito] = useState<RemitoWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [realtimeError, setRealtimeError] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Cargar remitos iniciales
   const loadRemitos = useCallback(async () => {
@@ -45,56 +47,109 @@ export const useRealtimeRemitos = () => {
     loadCurrentRemito();
   }, [loadRemitos, loadCurrentRemito]);
 
+  // Configurar polling como fallback si Realtime falla
+  const startPolling = useCallback(() => {
+    console.log('🔄 Iniciando polling como fallback...');
+    const interval = setInterval(() => {
+      loadRemitos();
+      loadCurrentRemito();
+    }, 5000); // Polling cada 5 segundos
+    setPollingInterval(interval);
+  }, [loadRemitos, loadCurrentRemito]);
+
+  const stopPolling = useCallback(() => {
+    if (pollingInterval) {
+      console.log('🛑 Deteniendo polling...');
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  }, [pollingInterval]);
+
   // Configurar Realtime para remitos
   useEffect(() => {
     console.log('🔌 Configurando Realtime para remitos...');
     
-    const remitosChannel = supabase
-      .channel('remitos_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'remitos'
-        },
-        (payload) => {
-          console.log('📡 Cambio detectado en remitos:', payload);
-          // Recargar remitos cuando hay cambios
-          loadRemitos();
-          loadCurrentRemito();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'remito_items'
-        },
-        (payload) => {
-          console.log('📡 Cambio detectado en remito_items:', payload);
-          // Recargar remitos cuando hay cambios en items
-          loadRemitos();
-          loadCurrentRemito();
-        }
-      )
-      .subscribe((status) => {
-        console.log('🔌 Estado de suscripción Realtime:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Suscrito exitosamente a cambios en tiempo real');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Error en la suscripción Realtime');
-          setError('Error de conexión en tiempo real');
-        }
-      });
+    let remitosChannel: any = null;
+    
+    try {
+      remitosChannel = supabase
+        .channel('remitos_changes', {
+          config: {
+            broadcast: { self: false },
+            presence: { key: 'remitos' }
+          }
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'remitos'
+          },
+          (payload) => {
+            console.log('📡 Cambio detectado en remitos:', payload);
+            // Recargar remitos cuando hay cambios
+            loadRemitos();
+            loadCurrentRemito();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'remito_items'
+          },
+          (payload) => {
+            console.log('📡 Cambio detectado en remito_items:', payload);
+            // Recargar remitos cuando hay cambios en items
+            loadRemitos();
+            loadCurrentRemito();
+          }
+        )
+        .subscribe((status, err) => {
+          console.log('🔌 Estado de suscripción Realtime:', status);
+          if (err) {
+            console.error('❌ Error en la suscripción Realtime:', err);
+          }
+          
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Suscrito exitosamente a cambios en tiempo real');
+            setError(null); // Limpiar errores previos
+            setRealtimeError(false);
+            stopPolling(); // Detener polling si Realtime funciona
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Error en la suscripción Realtime:', err);
+            setError(`Error de conexión en tiempo real: ${err?.message || 'Error desconocido'}`);
+            setRealtimeError(true);
+            startPolling(); // Iniciar polling como fallback
+          } else if (status === 'TIMED_OUT') {
+            console.error('❌ Timeout en la suscripción Realtime');
+            setError('Timeout en la conexión de tiempo real');
+            setRealtimeError(true);
+            startPolling(); // Iniciar polling como fallback
+          } else if (status === 'CLOSED') {
+            console.warn('⚠️ Conexión Realtime cerrada');
+            setRealtimeError(true);
+            startPolling(); // Iniciar polling como fallback
+          }
+        });
+    } catch (error) {
+      console.error('❌ Error configurando Realtime:', error);
+      setError('Error configurando conexión en tiempo real');
+      setRealtimeError(true);
+      startPolling(); // Iniciar polling como fallback
+    }
 
     // Cleanup al desmontar
     return () => {
       console.log('🔌 Desconectando Realtime...');
-      supabase.removeChannel(remitosChannel);
+      if (remitosChannel) {
+        supabase.removeChannel(remitosChannel);
+      }
+      stopPolling();
     };
-  }, [loadRemitos, loadCurrentRemito]);
+  }, [loadRemitos, loadCurrentRemito, startPolling, stopPolling]);
 
   // Generar remito para Villa Martelli
   const generateRemitoForVillaMartelli = async (productionItems: ProductionItem[]) => {
@@ -178,6 +233,8 @@ export const useRealtimeRemitos = () => {
     currentRemito,
     loading,
     error,
+    realtimeError,
+    isPolling: pollingInterval !== null,
     loadRemitos,
     loadCurrentRemito,
     generateRemitoForVillaMartelli,

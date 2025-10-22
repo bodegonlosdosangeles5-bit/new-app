@@ -5,15 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
-import { Formula } from "@/services/formulaService";
+import { Producto } from "@/services/productoService";
 import { useRealtimeInventory } from "@/hooks/useRealtimeInventory";
+import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
 
 interface DashboardMetricsProps {
-  formulas?: Formula[];
+  formulas?: Producto[]; // Mantener para compatibilidad pero no usar
   onNavigateToProduction?: () => void;
 }
 
 export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: DashboardMetricsProps) => {
+  // Usar el hook de productos en tiempo real
+  const { productos, loading: productosLoading, error: productosError } = useRealtimeProductos();
+  
+  // Usar los datos del hook en tiempo real o los props como fallback
+  const formulasData = productos.length > 0 ? productos : formulas;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isOutOfStockOpen, setIsOutOfStockOpen] = useState(false);
   const [isFormulasListOpen, setIsFormulasListOpen] = useState(false);
@@ -33,56 +39,53 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
 
   // Calcular los kilos disponibles usando la misma lógica que ProductionSection (excluyendo procesadas)
   const kilosDisponibles = useMemo(() => {
-    return formulas
+    return formulasData
       .filter(formula => {
         const normalizedStatus = normalizeText(formula.status);
         const normalizedDestination = normalizeText(formula.destination);
         
         const isTerminated = normalizedStatus === 'available';
         const isVillaMartelli = normalizedDestination === 'villamartelli';
-        const isNotProcessed = normalizedStatus !== 'procesado';
         
-        return isTerminated && isVillaMartelli && isNotProcessed;
+        return isTerminated && isVillaMartelli;
       })
       .reduce((total, formula) => total + (formula.batchSize || 0), 0);
-  }, [formulas]);
+  }, [formulasData]);
 
-  // Calcular fórmulas terminadas para Villa Martelli (excluyendo procesadas)
+  // Calcular productos terminados para Villa Martelli
   const formulasTerminadas = useMemo(() => {
-    console.log('🔍 DashboardMetrics - Filtrado de fórmulas:');
-    console.log('📊 Total de fórmulas recibidas:', formulas.length);
-    console.log('📊 Fórmulas recibidas:', formulas.map(f => ({
+    console.log('🔍 DashboardMetrics - Filtrado de productos:');
+    console.log('📊 Total de productos recibidos:', formulasData.length);
+    console.log('📊 Productos recibidos:', formulasData.map(f => ({
       id: f.id,
       name: f.name,
       status: f.status,
       destination: f.destination
     })));
     
-    const filtered = formulas.filter(formula => {
+    const filtered = formulasData.filter(formula => {
       const normalizedStatus = normalizeText(formula.status);
       const normalizedDestination = normalizeText(formula.destination);
       
       const isTerminated = normalizedStatus === 'available';
       const isVillaMartelli = normalizedDestination === 'villamartelli';
-      const isNotProcessed = normalizedStatus !== 'procesado';
       
-      console.log(`🔍 Fórmula ${formula.name}:`, {
+      console.log(`🔍 Producto ${formula.name}:`, {
         status: formula.status,
         normalizedStatus,
         destination: formula.destination,
         normalizedDestination,
         isTerminated,
         isVillaMartelli,
-        isNotProcessed,
-        passes: isTerminated && isVillaMartelli && isNotProcessed
+        passes: isTerminated && isVillaMartelli
       });
       
-      return isTerminated && isVillaMartelli && isNotProcessed;
+      return isTerminated && isVillaMartelli;
     });
     
-    console.log(`✅ Fórmulas filtradas para Villa Martelli: ${filtered.length}`);
+    console.log(`✅ Productos filtrados para Villa Martelli: ${filtered.length}`);
     return filtered;
-  }, [formulas]);
+  }, [formulasData]);
 
   // Filtrar inventario según término de búsqueda (igual que InventorySection)
   const filteredInventory = useMemo(() => {
