@@ -54,7 +54,7 @@ export const Navigation = ({ activeSection, onSectionChange }: NavigationProps) 
   const allNavItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "inventory", label: "Inventario", icon: Package },
-    { id: "formulas", label: "Fórmulas", icon: FlaskConical },
+    { id: "formulas", label: "Productos", icon: FlaskConical },
     { id: "production", label: "Producción", icon: Truck },
     { id: "users", label: "Usuarios", icon: Users, adminOnly: true },
   ];

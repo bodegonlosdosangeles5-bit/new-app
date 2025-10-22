@@ -468,7 +468,7 @@ export const FormulasSection = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            {showOnlyIncomplete ? "Fórmulas Incompletas" : "Gestión de Fórmulas"}
+            {showOnlyIncomplete ? "Productos Incompletos" : "Gestión de Productos"}
           </h2>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -507,7 +507,7 @@ export const FormulasSection = ({
           className="bg-green-600 hover:bg-green-700 text-white text-base font-medium px-6 py-2"
         >
           <Upload className="h-4 w-4 mr-2" />
-          Cargar Fórmula
+          Cargar Producto
         </Button>
       </div>
 
@@ -515,12 +515,12 @@ export const FormulasSection = ({
         <div className="text-center py-12">
           <Beaker className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            {showOnlyIncomplete ? "¡Excelente!" : "No hay fórmulas"}
+            {showOnlyIncomplete ? "¡Excelente!" : "No hay productos"}
           </h3>
           <p className="text-muted-foreground">
             {showOnlyIncomplete 
-              ? "Todas las fórmulas tienen los materiales necesarios disponibles." 
-              : "No se encontraron fórmulas en el sistema."
+              ? "Todas los productos tienen los materiales necesarios disponibles." 
+              : "No se encontraron productos en el sistema."
             }
           </p>
         </div>
@@ -703,7 +703,7 @@ export const FormulasSection = ({
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold">Editar Fórmula</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-bold">Editar Producto</DialogTitle>
           </DialogHeader>
           
           {editingFormula && (
@@ -922,7 +922,7 @@ export const FormulasSection = ({
       <Dialog open={isLoadModalOpen} onOpenChange={setIsLoadModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-0">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold">Cargar Nueva Fórmula</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-bold">Cargar Nuevo Producto</DialogTitle>
           </DialogHeader>
           
           <form onSubmit={handleLoadFormula} className="space-y-4 sm:space-y-6">
@@ -990,7 +990,7 @@ export const FormulasSection = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="type">Tipo de Fórmula</Label>
+                <Label htmlFor="type">Tipo de Producto</Label>
                 <Select value={newFormula.type} onValueChange={(value) => handleInputChange("type", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar tipo" />
@@ -1107,7 +1107,7 @@ export const FormulasSection = ({
             <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-semibold text-sm mb-2">Destino Automático:</h4>
               <p className="text-sm text-muted-foreground">
-                Todas las fórmulas → Villa Martelli (automático)
+                Todos los productos → Villa Martelli (automático)
               </p>
             </div>
 
@@ -1125,7 +1125,7 @@ export const FormulasSection = ({
                 className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto order-1 sm:order-2"
               >
                 <Upload className="h-4 w-4 mr-2" />
-                Cargar Fórmula
+                Cargar Producto
               </Button>
             </DialogFooter>
           </form>
@@ -1145,7 +1145,7 @@ export const FormulasSection = ({
           {selectedFormulaForIngredient && (
             <div className="space-y-4">
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium">Fórmula: {selectedFormulaForIngredient.name}</p>
+                <p className="text-sm font-medium">Producto: {selectedFormulaForIngredient.name}</p>
                 <p className="text-xs text-muted-foreground">Lote: {selectedFormulaForIngredient.id}</p>
               </div>
               

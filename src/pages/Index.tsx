@@ -6,34 +6,34 @@ import { InventorySection } from "@/components/InventorySection";
 import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
 import { UserAdminPanel } from "@/components/UserAdminPanel";
-import { useRealtimeFormulas } from "@/hooks/useRealtimeFormulas";
-import { Formula } from "@/services/formulaService";
+import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
+import { Producto } from "@/services/productoService";
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { AuthProvider } from "@/components/Auth/AuthProvider";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   
-  // Usar el hook de fórmulas con Supabase Realtime
+  // Usar el hook de productos con Supabase Realtime
   const { 
-    formulas, 
+    productos, 
     loading, 
     error, 
-    createFormula, 
-    updateFormula, 
-    deleteFormula,
+    createProducto, 
+    updateProducto, 
+    deleteProducto,
     addMissingIngredient,
     removeMissingIngredient,
-    updateIncompleteFormulasStatus
-  } = useRealtimeFormulas();
+    updateIncompleteProductosStatus
+  } = useRealtimeProductos();
   
   // Logging para debug
   console.log('🏠 Index.tsx - Estado actual:', { 
-    formulasCount: formulas.length, 
+    productosCount: productos.length, 
     loading, 
     error, 
     activeSection,
-    formulas: formulas
+    productos: productos
   });
   
   // Log adicional para debug
@@ -42,7 +42,7 @@ const Index = () => {
   }
   
   if (loading) {
-    console.log('⏳ Index.tsx - Cargando fórmulas...');
+    console.log('⏳ Index.tsx - Cargando productos...');
   }
 
   const renderSection = () => {
@@ -51,24 +51,24 @@ const Index = () => {
         return <InventorySection />;
       case "formulas":
         return <FormulasSection 
-          formulas={formulas} 
+          formulas={productos} 
           setFormulas={() => {}} // Función vacía ya que usamos Supabase Realtime
-          createFormula={createFormula}
-          updateFormula={updateFormula}
-          deleteFormula={deleteFormula}
+          createFormula={createProducto}
+          updateFormula={updateProducto}
+          deleteFormula={deleteProducto}
           addMissingIngredient={addMissingIngredient}
           removeMissingIngredient={removeMissingIngredient}
-          updateIncompleteFormulasStatus={updateIncompleteFormulasStatus}
+          updateIncompleteFormulasStatus={updateIncompleteProductosStatus}
           loading={loading}
           error={error}
         />;
       case "production":
-        return <ProductionSection formulas={formulas as Formula[]} />;
+        return <ProductionSection formulas={productos as Producto[]} />;
       case "users":
         return <UserAdminPanel />;
       default:
         return <DashboardMetrics 
-          formulas={formulas as Formula[]} 
+          formulas={productos as Producto[]} 
           onNavigateToProduction={() => setActiveSection("production")}
         />;
     }

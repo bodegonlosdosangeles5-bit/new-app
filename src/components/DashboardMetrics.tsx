@@ -112,7 +112,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       hasOutOfStock: true,
     },
     {
-      title: "Fórmulas Terminadas",
+      title: "Productos Terminados",
       value: formulasTerminadas.length.toString(),
       subtitle: "para Villa Martelli",
       icon: FlaskConical,
@@ -391,7 +391,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FlaskConical className="h-5 w-5 text-accent" />
-              Fórmulas Terminadas - Villa Martelli
+              Productos Terminados - Villa Martelli
             </DialogTitle>
           </DialogHeader>
           
@@ -401,7 +401,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
               <div className="flex items-center gap-2 text-accent">
                 <TrendingUp className="h-5 w-5" />
                 <span className="font-semibold">
-                  {formulasTerminadas.length} fórmulas terminadas
+                  {formulasTerminadas.length} productos terminados
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
@@ -413,7 +413,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
             <div className="max-h-96 overflow-y-auto">
               {formulasTerminadas.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No hay fórmulas terminadas para Villa Martelli
+                  No hay productos terminados para Villa Martelli
                 </div>
               ) : (
                 <div className="grid gap-3">
@@ -467,7 +467,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
 
             {/* Resumen final */}
             <div className="text-sm text-muted-foreground text-center border-t pt-4">
-              Total de fórmulas terminadas: {formulasTerminadas.length} | Total de kilos: {kilosDisponibles.toLocaleString()} kg
+              Total de productos terminados: {formulasTerminadas.length} | Total de kilos: {kilosDisponibles.toLocaleString()} kg
             </div>
           </div>
         </DialogContent>

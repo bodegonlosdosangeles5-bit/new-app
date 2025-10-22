@@ -34,17 +34,66 @@ export interface ProductionItem {
   name: string;
   batchSize: number;
   destination: string;
-  status: string;
+  status: 'available' | 'incomplete' | 'procesado' | string; // Permitir otros status
   date?: string;
-  type: string;
+  type: 'stock' | 'client' | string; // Permitir otros tipos
   clientName?: string;
 }
 
 export class RemitoService {
+  // Obtener todos los remitos
+  static async getAllRemitos(): Promise<Remito[]> {
+    try {
+      const { data: remitos, error } = await supabase
+        .from('remitos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return remitos || [];
+    } catch (error) {
+      console.error('Error obteniendo remitos:', error);
+      return [];
+    }
+  }
+
+  // Obtener remito con items
+  static async getRemitoWithItems(remitoId: string): Promise<RemitoWithItems | null> {
+    try {
+      // Obtener datos del remito
+      const { data: remito, error: remitoError } = await supabase
+        .from('remitos')
+        .select('*')
+        .eq('id', remitoId)
+        .single();
+
+      if (remitoError) throw remitoError;
+      if (!remito) return null;
+
+      // Obtener items del remito
+      const { data: items, error: itemsError } = await supabase
+        .from('remito_items')
+        .select('*')
+        .eq('remito_id', remitoId)
+        .order('created_at', { ascending: true });
+
+      if (itemsError) throw itemsError;
+
+      return {
+        ...remito,
+        items: items || []
+      };
+    } catch (error) {
+      console.error('Error obteniendo remito con items:', error);
+      return null;
+    }
+  }
+
   // Generar o actualizar remito del día para Villa Martelli
   static async generateRemitoForVillaMartelli(productionItems: ProductionItem[]): Promise<RemitoWithItems | null> {
     try {
       console.log('🔄 Generando remito para Villa Martelli...');
+      console.log('📊 Production items recibidos en servicio:', productionItems);
       
       // Filtrar items de Villa Martelli que estén terminados
       const villaMartelliItems = productionItems.filter(item => {
@@ -54,8 +103,12 @@ export class RemitoService {
         const isTerminated = ['terminado', 'finalizado', 'completo', 'available'].includes(normalizedStatus);
         const isVillaMartelli = normalizedDestination === 'villamartelli';
         
+        console.log(`🔍 Item: ${item.name}, Status: ${item.status} -> ${normalizedStatus}, Destination: ${item.destination} -> ${normalizedDestination}, isTerminated: ${isTerminated}, isVillaMartelli: ${isVillaMartelli}`);
+        
         return isTerminated && isVillaMartelli;
       });
+
+      console.log('📊 Villa Martelli items filtrados en servicio:', villaMartelliItems);
 
       if (villaMartelliItems.length === 0) {
         console.log('⚠️ No hay items de Villa Martelli para generar remito');
@@ -90,13 +143,14 @@ export class RemitoService {
       const totalKilos = remitoItems.reduce((sum, item) => sum + item.kilos_sumados, 0);
 
       console.log(`📊 Items agrupados: ${remitoItems.length}, Total kilos: ${totalKilos}`);
+      console.log('📊 Remito items para RPC:', remitoItems);
 
       // Usar transacción para crear/actualizar remito y sus items
-      const { data, error } = await supabase.rpc('generate_remito_villa_martelli', {
+      const rpcParams = {
         p_destino: 'Villa Martelli',
         p_fecha: new Date().toISOString().split('T')[0],
-        p_total_kilos: totalKilos,
         p_observaciones: null,
+        p_total_kilos: totalKilos,
         p_items: remitoItems.map(item => ({
           producto_id: item.producto_id,
           nombre_producto: item.nombre_producto,
@@ -106,10 +160,18 @@ export class RemitoService {
           cliente_o_stock: item.cliente_o_stock,
           notas: item.notas || ''
         }))
-      });
+      };
+      
+      console.log('🔄 Llamando RPC con parámetros:', rpcParams);
+      
+      const { data, error } = await supabase.rpc('generate_remito_villa_martelli', rpcParams);
+
+      console.log('📊 Respuesta RPC - data:', data);
+      console.log('📊 Respuesta RPC - error:', error);
 
       if (error) {
         console.error('❌ Error en RPC:', error);
+        console.error('❌ Error details:', error.message);
         // Fallback: usar operaciones individuales
         return await this.generateRemitoFallback(villaMartelliItems, remitoItems, totalKilos);
       }
@@ -242,40 +304,61 @@ export class RemitoService {
     }
   }
 
-  // Reiniciar la producción actual después de crear un remito
+  // Eliminar productos de la producción después de crear un remito
   private static async resetProductionAfterRemito(productionItems: ProductionItem[]): Promise<void> {
     try {
-      console.log('🔄 Reiniciando producción actual después de crear remito...');
-      console.log('📋 Items de producción a procesar:', productionItems.length);
+      console.log('🔄 Eliminando productos de la producción después de crear remito...');
+      console.log('📋 Items de producción a eliminar:', productionItems.length);
       
-      // Obtener los IDs de las fórmulas que se incluyeron en el remito
-      const formulaIds = productionItems.map(item => item.id);
-      console.log('🆔 IDs de fórmulas a procesar:', formulaIds);
+      // Obtener los IDs de los productos que se incluyeron en el remito
+      const productoIds = productionItems.map(item => item.id);
+      console.log('🆔 IDs de productos a eliminar:', productoIds);
       
-      if (formulaIds.length === 0) {
-        console.log('⚠️ No hay fórmulas para reiniciar');
+      if (productoIds.length === 0) {
+        console.log('⚠️ No hay productos para eliminar');
         return;
       }
 
-      // Cambiar el status de las fórmulas a "procesado" para que no aparezcan en producción actual
-      console.log('🔄 Actualizando status de fórmulas a "procesado"...');
-      const { error } = await supabase
-        .from('formulas')
-        .update({ 
-          status: 'procesado',
-          updated_at: new Date().toISOString()
-        })
-        .in('id', formulaIds);
+      // Eliminar los productos completamente de la tabla productos
+      console.log('🔄 Eliminando productos de la tabla productos...');
+      const { error: productosError } = await supabase
+        .from('productos')
+        .delete()
+        .in('id', productoIds);
 
-      if (error) {
-        console.error('❌ Error actualizando status de fórmulas:', error);
-        throw error;
+      if (productosError) {
+        console.error('❌ Error eliminando productos:', productosError);
+        throw productosError;
       }
 
-      console.log(`✅ ${formulaIds.length} fórmulas marcadas como procesadas`);
-      console.log('🎯 Producción actual reiniciada - las fórmulas ya no aparecerán en "Productos disponibles para Villa Martelli"');
+      // También eliminar los ingredientes faltantes asociados
+      console.log('🔄 Eliminando ingredientes faltantes asociados...');
+      const { error: missingIngredientsError } = await supabase
+        .from('missing_ingredients')
+        .delete()
+        .in('producto_id', productoIds);
+
+      if (missingIngredientsError) {
+        console.error('❌ Error eliminando ingredientes faltantes:', missingIngredientsError);
+        // No lanzar error aquí, solo log
+      }
+
+      // También eliminar los ingredientes disponibles asociados
+      console.log('🔄 Eliminando ingredientes disponibles asociados...');
+      const { error: availableIngredientsError } = await supabase
+        .from('available_ingredients')
+        .delete()
+        .in('producto_id', productoIds);
+
+      if (availableIngredientsError) {
+        console.error('❌ Error eliminando ingredientes disponibles:', availableIngredientsError);
+        // No lanzar error aquí, solo log
+      }
+
+      console.log(`✅ ${productoIds.length} productos eliminados completamente de la gestión de productos`);
+      console.log('🎯 Los productos ya no aparecerán en "Gestión de Productos" ni en "Productos disponibles para Villa Martelli"');
     } catch (error) {
-      console.error('❌ Error reiniciando producción:', error);
+      console.error('❌ Error eliminando productos:', error);
       // No lanzar el error para no interrumpir el flujo del remito
     }
   }

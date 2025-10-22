@@ -11,24 +11,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RemitoProduction } from "@/components/RemitoProduction";
 import { EnvioDetailModal } from "@/components/EnvioDetailModal";
-import { Formula } from "@/services/formulaService";
+import { Producto } from "@/services/productoService";
 import { useRealtimeEnvios } from "@/hooks/useRealtimeEnvios";
+import { useRealtimeRemitos } from "@/hooks/useRealtimeRemitos";
+import { useRemitos } from "@/hooks/useRemitos";
+import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
 import { EnvioConRemitos } from "@/services/envioService";
+import { RemitoWithItems } from "@/services/remitoService";
 
 interface ProductionSectionProps {
-  formulas?: Formula[];
+  formulas?: Producto[]; // Mantener para compatibilidad pero no usar
 }
 
 export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => {
+  // Usar el hook de productos en tiempo real
+  const { productos, loading: productosLoading, error: productosError } = useRealtimeProductos();
   const [activeTab, setActiveTab] = useState("current");
-  const [isCreateEnvioModalOpen, setIsCreateEnvioModalOpen] = useState(false);
   const [selectedEnvio, setSelectedEnvio] = useState<EnvioConRemitos | null>(null);
   const [isEnvioDetailOpen, setIsEnvioDetailOpen] = useState(false);
-  const [newEnvio, setNewEnvio] = useState({
-    destino: "",
-    observaciones: ""
-  });
-  const [isCreatingEnvio, setIsCreatingEnvio] = useState(false);
+  const [selectedRemito, setSelectedRemito] = useState<RemitoWithItems | null>(null);
+  const [isRemitoDetailOpen, setIsRemitoDetailOpen] = useState(false);
 
   // Hook para envíos
   const {
@@ -39,6 +41,21 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
     getEnvioConRemitos
   } = useRealtimeEnvios();
 
+  // Hook para remitos
+  const {
+    currentRemito,
+    loading: remitosLoading,
+    error: remitosError
+  } = useRealtimeRemitos();
+
+  // Hook para obtener todos los remitos
+  const {
+    remitos,
+    loading: allRemitosLoading,
+    error: allRemitosError,
+    getRemitoWithItems
+  } = useRemitos();
+
   // Función para normalizar texto (quitar tildes, espacios y convertir a minúsculas)
   const normalizeText = (text: string) => {
     return text
@@ -48,75 +65,49 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       .replace(/\s+/g, ''); // Quitar espacios
   };
 
-  // Mostrar fórmulas terminadas con destino a Villa Martelli (excluyendo las procesadas)
+  // Mostrar productos terminados con destino a Villa Martelli
   const currentProduction = useMemo(() => {
-    console.log('🔍 Fórmulas recibidas en ProductionSection:', formulas);
+    console.log('🔍 Productos recibidos en ProductionSection:', productos);
     
-    const filtered = formulas.filter(formula => {
-      const normalizedStatus = normalizeText(formula.status);
-      const normalizedDestination = normalizeText(formula.destination);
+    const filtered = productos.filter(producto => {
+      const normalizedStatus = normalizeText(producto.status);
+      const normalizedDestination = normalizeText(producto.destination);
       
       const isTerminated = normalizedStatus === 'available';
       const isVillaMartelli = normalizedDestination === 'villamartelli';
-      const isNotProcessed = normalizedStatus !== 'procesado';
       
-      console.log(`📋 Fórmula ${formula.name}:`, {
-        status: formula.status,
+      console.log(`📋 Producto ${producto.name}:`, {
+        status: producto.status,
         normalizedStatus,
-        destination: formula.destination,
+        destination: producto.destination,
         normalizedDestination,
         isTerminated,
         isVillaMartelli,
-        isNotProcessed,
-        passes: isTerminated && isVillaMartelli && isNotProcessed
+        passes: isTerminated && isVillaMartelli
       });
       
-      return isTerminated && isVillaMartelli && isNotProcessed;
+      return isTerminated && isVillaMartelli;
     });
     
-    console.log('✅ Fórmulas filtradas para producción:', filtered);
+    console.log('✅ Productos filtrados para producción:', filtered);
     return filtered;
-  }, [formulas]);
+  }, [productos]);
 
-  // Calcular la producción total del mes sumando los kilogramos de todas las fórmulas terminadas (excluyendo procesadas)
+  // Calcular la producción total del mes sumando los kilogramos de todos los productos terminados
   const monthlyProduction = useMemo(() => {
-    return formulas
-      .filter(formula => {
-        const normalizedStatus = normalizeText(formula.status);
-        const normalizedDestination = normalizeText(formula.destination);
+    return productos
+      .filter(producto => {
+        const normalizedStatus = normalizeText(producto.status);
+        const normalizedDestination = normalizeText(producto.destination);
         
         const isTerminated = normalizedStatus === 'available';
         const isVillaMartelli = normalizedDestination === 'villamartelli';
-        const isNotProcessed = normalizedStatus !== 'procesado';
         
-        return isTerminated && isVillaMartelli && isNotProcessed;
+        return isTerminated && isVillaMartelli;
       })
-      .reduce((total, formula) => total + (formula.batchSize || 0), 0);
-  }, [formulas]);
+      .reduce((total, producto) => total + (producto.batchSize || 0), 0);
+  }, [productos]);
 
-  // Funciones para manejar envíos
-  const handleCreateEnvio = async () => {
-    if (!newEnvio.destino.trim()) return;
-
-    setIsCreatingEnvio(true);
-    try {
-      const nuevoEnvio = await crearEnvioConRemitosPendientes(
-        newEnvio.destino,
-        newEnvio.observaciones || undefined
-      );
-
-      if (nuevoEnvio) {
-        setIsCreateEnvioModalOpen(false);
-        setNewEnvio({ destino: "", observaciones: "" });
-        // Cambiar a la pestaña de envíos para mostrar el nuevo envío
-        setActiveTab("shipments");
-      }
-    } catch (error) {
-      console.error('Error creando envío:', error);
-    } finally {
-      setIsCreatingEnvio(false);
-    }
-  };
 
   const handleViewEnvio = async (envioId: string) => {
     try {
@@ -127,6 +118,18 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
       }
     } catch (error) {
       console.error('Error obteniendo detalles del envío:', error);
+    }
+  };
+
+  const handleViewRemito = async (remitoId: string) => {
+    try {
+      const remitoConItems = await getRemitoWithItems(remitoId);
+      if (remitoConItems) {
+        setSelectedRemito(remitoConItems);
+        setIsRemitoDetailOpen(true);
+      }
+    } catch (error) {
+      console.error('Error obteniendo detalles del remito:', error);
     }
   };
 
@@ -266,75 +269,66 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         </TabsContent>
 
         <TabsContent value="remito" className="space-y-4">
-          <RemitoProduction productionItems={formulas} />
+          <RemitoProduction productionItems={productos} />
         </TabsContent>
 
         <TabsContent value="shipments" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Envíos</h3>
-            <Button 
-              onClick={() => setIsCreateEnvioModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Crear Envío
-            </Button>
+            <h3 className="text-lg font-semibold">Remitos Generados</h3>
           </div>
 
-          {enviosLoading ? (
+          {allRemitosLoading ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Cargando envíos...</p>
+              <p className="text-muted-foreground">Cargando remitos...</p>
             </div>
-          ) : enviosError ? (
+          ) : allRemitosError ? (
             <div className="text-center py-8">
-              <p className="text-destructive">Error: {enviosError}</p>
+              <p className="text-destructive">Error: {allRemitosError}</p>
             </div>
-          ) : envios.length === 0 ? (
+          ) : remitos.length === 0 ? (
             <div className="text-center py-8">
-              <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg">No hay envíos registrados</p>
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">No hay remitos generados</p>
               <p className="text-muted-foreground text-sm mt-2">
-                Crea un envío para asociar los remitos pendientes
+                Ve a la pestaña "Remito" para generar un nuevo remito
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {envios.map((envio) => (
-                <Card key={envio.id} className="hover:shadow-md transition-shadow">
+              {remitos.map((remito) => (
+                <Card key={remito.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-base sm:text-lg font-semibold">
-                      Número de Remito: {envio.numero_envio}
+                      {remito.id}
                     </CardTitle>
-                    {envio.estado !== "pendiente" && (
-                      <Badge variant={getStatusColor(envio.estado) as "default" | "secondary" | "destructive" | "outline"}>
-                        {getStatusText(envio.estado)}
-                      </Badge>
-                    )}
+                    <Badge variant={getStatusColor(remito.estado) as "default" | "secondary" | "destructive" | "outline"}>
+                      {getStatusText(remito.estado)}
+                    </Badge>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{new Date(envio.fecha_creacion).toLocaleDateString()}</span>
+                        <span>{new Date(remito.fecha).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Weight className="h-4 w-4 text-muted-foreground" />
-                        <span>{envio.total_kilos} kg</span>
+                        <span>{remito.total_kilos} kg</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{envio.destino}</span>
+                        <span className="truncate">{remito.destino}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span>{envio.total_remitos} remitos</span>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{new Date(remito.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    {envio.observaciones && (
+                    {remito.observaciones && (
                       <div className="pt-2 border-t">
                         <div className="text-sm">
                           <span className="text-muted-foreground">Observaciones: </span>
-                          <span className="font-medium">{envio.observaciones}</span>
+                          <span className="font-medium">{remito.observaciones}</span>
                         </div>
                       </div>
                     )}
@@ -342,7 +336,7 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewEnvio(envio.id)}
+                        onClick={() => handleViewRemito(remito.id)}
                         className="w-full flex items-center gap-2"
                       >
                         <Eye className="h-4 w-4" />
@@ -357,51 +351,6 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
         </TabsContent>
       </Tabs>
 
-      {/* Modal para crear envío */}
-      <Dialog open={isCreateEnvioModalOpen} onOpenChange={setIsCreateEnvioModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Envío</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="destino">Destino *</Label>
-              <Input
-                id="destino"
-                value={newEnvio.destino}
-                onChange={(e) => setNewEnvio(prev => ({ ...prev, destino: e.target.value }))}
-                placeholder="Ej: Villa Martelli, Florencio Varela"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="observaciones">Observaciones</Label>
-              <Textarea
-                id="observaciones"
-                value={newEnvio.observaciones}
-                onChange={(e) => setNewEnvio(prev => ({ ...prev, observaciones: e.target.value }))}
-                placeholder="Observaciones adicionales (opcional)"
-                rows={3}
-              />
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Nota:</strong> Se asociarán automáticamente todos los remitos pendientes (estado "abierto") al nuevo envío.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateEnvioModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleCreateEnvio}
-              disabled={!newEnvio.destino.trim() || isCreatingEnvio}
-            >
-              {isCreatingEnvio ? 'Creando...' : 'Crear Envío'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Modal de detalle de envío */}
       <EnvioDetailModal
@@ -412,6 +361,83 @@ export const ProductionSection = ({ formulas = [] }: ProductionSectionProps) => 
           setSelectedEnvio(null);
         }}
       />
+
+      {/* Modal de detalle de remito */}
+      <Dialog open={isRemitoDetailOpen} onOpenChange={setIsRemitoDetailOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Detalles del Remito: {selectedRemito?.id}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRemito && (
+            <div className="space-y-6">
+              {/* Información general */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Destino</Label>
+                  <p className="text-sm">{selectedRemito.destino}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Fecha</Label>
+                  <p className="text-sm">{new Date(selectedRemito.fecha).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Total Kilos</Label>
+                  <p className="text-sm font-semibold">{selectedRemito.total_kilos} kg</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Estado</Label>
+                  <Badge variant={getStatusColor(selectedRemito.estado) as "default" | "secondary" | "destructive" | "outline"}>
+                    {getStatusText(selectedRemito.estado)}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Items del remito */}
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground mb-3 block">
+                  Productos ({selectedRemito.items.length})
+                </Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {selectedRemito.items.map((item, index) => (
+                    <div key={item.id} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{item.nombre_producto}</p>
+                          <p className="text-xs text-muted-foreground">ID: {item.producto_id}</p>
+                          {item.lote && <p className="text-xs text-muted-foreground">Lote: {item.lote}</p>}
+                          {item.cliente_o_stock && <p className="text-xs text-muted-foreground">{item.cliente_o_stock}</p>}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{item.kilos_sumados} kg</p>
+                          <p className="text-xs text-muted-foreground">{item.cantidad_lotes} lotes</p>
+                        </div>
+                      </div>
+                      {item.notas && (
+                        <p className="text-xs text-muted-foreground mt-2 italic">Notas: {item.notas}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedRemito.observaciones && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Observaciones</Label>
+                  <p className="text-sm p-3 bg-muted rounded-lg mt-1">{selectedRemito.observaciones}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRemitoDetailOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
