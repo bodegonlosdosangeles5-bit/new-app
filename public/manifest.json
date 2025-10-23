@@ -12,6 +12,12 @@
   "categories": ["productivity", "business"],
   "icons": [
     {
+      "src": "/icono.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
@@ -40,28 +46,28 @@
       "short_name": "Dashboard",
       "description": "Ver métricas principales",
       "url": "/?section=dashboard",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "icons": [{ "src": "/icono.png", "sizes": "96x96" }]
     },
     {
       "name": "Inventario",
       "short_name": "Inventario",
       "description": "Gestionar materias primas",
       "url": "/?section=inventory",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "icons": [{ "src": "/icono.png", "sizes": "96x96" }]
     },
     {
       "name": "Fórmulas",
       "short_name": "Fórmulas",
       "description": "Administrar fórmulas",
       "url": "/?section=formulas",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "icons": [{ "src": "/icono.png", "sizes": "96x96" }]
     },
     {
       "name": "Producción",
       "short_name": "Producción",
       "description": "Control de producción",
       "url": "/?section=production",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "icons": [{ "src": "/icono.png", "sizes": "96x96" }]
     }
   ]
 }
