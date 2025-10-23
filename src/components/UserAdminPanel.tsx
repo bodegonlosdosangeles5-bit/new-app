@@ -22,12 +22,22 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react';
-import { UserService, UserProfile, CreateUserData, UpdateUserData } from '@/services/userService';
+import { UserProfile, CreateUserData, UpdateUserData, UserService } from '@/services/userService';
+import { useRealtimeUsers } from '@/hooks/useRealtimeUsers';
 
 export const UserAdminPanel: React.FC = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Usar el hook de Realtime para usuarios
+  const {
+    users,
+    loading,
+    error,
+    stats,
+    createUser,
+    updateUser,
+    deleteUser,
+    resetUserPassword
+  } = useRealtimeUsers();
+
   const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -50,65 +60,37 @@ export const UserAdminPanel: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
-  const [stats, setStats] = useState({
-    total: 0,
-    users: 0,
-    admins: 0,
-    users_role: 0
-  });
-
-  // Cargar usuarios al montar el componente
-  useEffect(() => {
-    loadUsers();
-    checkAdminStatus();
-  }, []);
 
   // Verificar si el usuario actual es administrador
-  const checkAdminStatus = async () => {
-    try {
-      const adminStatus = await UserService.isCurrentUserAdmin();
-      setIsAdmin(adminStatus);
-      setAccessDenied(!adminStatus);
-    } catch (error) {
-      console.error('Error verificando rol de administrador:', error);
-      setIsAdmin(false);
-      setAccessDenied(true);
-    }
-  };
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [usersData, statsData] = await Promise.all([
-        UserService.getUsers(),
-        UserService.getUserStats()
-      ]);
-      setUsers(usersData);
-      setStats(statsData);
-    } catch (err) {
-      setError('Error al cargar usuarios');
-      console.error('Error cargando usuarios:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const adminStatus = await UserService.isCurrentUserAdmin();
+        setIsAdmin(adminStatus);
+        setAccessDenied(!adminStatus);
+      } catch (error) {
+        console.error('Error verificando rol de administrador:', error);
+        setIsAdmin(false);
+        setAccessDenied(true);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      setError(null);
-      await UserService.createUser(newUser);
+      await createUser({
+        user_name: newUser.user_name,
+        password: newUser.password,
+        role: newUser.role || 'user'
+      });
       setSuccess('Usuario creado exitosamente');
       setIsCreateModalOpen(false);
       setNewUser({ user_name: '', password: '', role: 'user' });
-      await loadUsers();
     } catch (err) {
-      setError('Error al crear usuario');
       console.error('Error creando usuario:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -117,19 +99,13 @@ export const UserAdminPanel: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      await UserService.updateUser(selectedUser.id, editUser);
+      await updateUser(selectedUser.id, editUser);
       setSuccess('Usuario actualizado exitosamente');
       setIsEditModalOpen(false);
       setEditUser({});
       setSelectedUser(null);
-      await loadUsers();
     } catch (err) {
-      setError('Error al actualizar usuario');
       console.error('Error actualizando usuario:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -137,18 +113,12 @@ export const UserAdminPanel: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      await UserService.deleteUser(selectedUser.id);
+      await deleteUser(selectedUser.id);
       setSuccess('Usuario eliminado exitosamente');
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
-      await loadUsers();
     } catch (err) {
-      setError('Error al eliminar usuario');
       console.error('Error eliminando usuario:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -157,18 +127,13 @@ export const UserAdminPanel: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      await UserService.resetUserPassword(selectedUser.id, newPassword);
+      await resetUserPassword(selectedUser.id, newPassword);
       setSuccess('Contraseña actualizada exitosamente');
       setIsPasswordModalOpen(false);
       setNewPassword('');
       setSelectedUser(null);
     } catch (err) {
-      setError('Error al cambiar contraseña');
       console.error('Error cambiando contraseña:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -329,7 +294,7 @@ export const UserAdminPanel: React.FC = () => {
               <div className="flex items-end sm:items-center">
                 <Button 
                   variant="outline" 
-                  onClick={loadUsers} 
+                  onClick={() => window.location.reload()} 
                   disabled={loading}
                   size="sm"
                   className="w-full sm:w-auto"

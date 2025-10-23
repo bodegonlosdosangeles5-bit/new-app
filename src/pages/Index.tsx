@@ -7,6 +7,7 @@ import { FormulasSection } from "@/components/FormulasSection";
 import { ProductionSection } from "@/components/ProductionSection";
 import { UserAdminPanel } from "@/components/UserAdminPanel";
 import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { Producto } from "@/services/productoService";
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { AuthProvider } from "@/components/Auth/AuthProvider";
@@ -26,6 +27,9 @@ const Index = () => {
     removeMissingIngredient,
     updateIncompleteProductosStatus
   } = useRealtimeProductos();
+
+  // Usar el hook de actualizaciones en tiempo real
+  const { isConnected, lastUpdate } = useRealtimeUpdates();
   
   // Logging para debug
   console.log('🏠 Index.tsx - Estado actual:', { 
@@ -33,6 +37,8 @@ const Index = () => {
     loading, 
     error, 
     activeSection,
+    isConnected,
+    lastUpdate,
     productos: productos
   });
   
@@ -43,6 +49,11 @@ const Index = () => {
   
   if (loading) {
     console.log('⏳ Index.tsx - Cargando productos...');
+  }
+
+  // Log de actualizaciones en tiempo real
+  if (lastUpdate) {
+    console.log('🔄 Actualización en tiempo real detectada:', lastUpdate);
   }
 
   const renderSection = () => {

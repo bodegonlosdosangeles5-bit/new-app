@@ -1,5 +1,6 @@
 import React from 'react';
 import { DateTimeDisplay } from '@/components/DateTimeDisplay';
+import { RealtimeIndicator } from '@/components/RealtimeIndicator';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DashboardHeaderProps {
@@ -23,9 +24,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </p>
           </div>
           
-          {/* Date and Time Display */}
-          <div className="flex-shrink-0">
+          {/* Date and Time Display with Realtime Indicator */}
+          <div className="flex flex-col items-end space-y-2">
             <DateTimeDisplay format="full" />
+            <RealtimeIndicator />
           </div>
         </div>
       </CardContent>
