@@ -35,103 +35,81 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar sesión de Supabase al cargar la aplicación
-    const checkSession = async () => {
+    // Verificar si hay un usuario guardado en localStorage
+    console.log('🔍 AuthProvider: Verificando localStorage...');
+    const savedUser = localStorage.getItem('user');
+    console.log('🔍 AuthProvider: Usuario guardado:', savedUser);
+    
+    if (savedUser) {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error obteniendo sesión:', error);
-          setLoading(false);
-          return;
-        }
-
-        if (session?.user) {
-          // Obtener información del usuario desde la base de datos
-          const { data: userData, error: userError } = await supabase
-            .rpc('get_current_user');
-
-          if (userError || !(userData as any).success) {
-            console.error('Error obteniendo información del usuario:', userError);
-            // Limpiar sesión inválida
-            await supabase.auth.signOut();
-            localStorage.removeItem('user');
-          } else {
-            const userInfo = (userData as any);
-            const userDataComplete = {
-              id: userInfo.id,
-              user_name: userInfo.user_name,
-              role: userInfo.role,
-              created_at: userInfo.created_at
-            };
-            setUser(userDataComplete);
-            localStorage.setItem('user', JSON.stringify(userDataComplete));
-          }
-        } else {
-          // No hay sesión activa, verificar localStorage como fallback
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch (error) {
-              console.error('Error parsing saved user:', error);
-              localStorage.removeItem('user');
-            }
-          }
-        }
+        const parsedUser = JSON.parse(savedUser);
+        console.log('✅ AuthProvider: Usuario parseado correctamente:', parsedUser);
+        setUser(parsedUser);
       } catch (error) {
-        console.error('Error verificando sesión:', error);
-      } finally {
-        setLoading(false);
+        console.error('❌ AuthProvider: Error parsing saved user:', error);
+        localStorage.removeItem('user');
       }
-    };
-
-    checkSession();
+    } else {
+      console.log('ℹ️ AuthProvider: No hay usuario guardado en localStorage');
+    }
+    setLoading(false);
   }, []);
 
   const signIn = async (username: string, password: string) => {
     try {
-      // Usar la nueva función que establece la sesión de Supabase
+      console.log('🔐 AuthProvider: Iniciando signIn para usuario:', username);
+      
+      // Usar la función original de autenticación
       const { data, error } = await supabase
-        .rpc('authenticate_user_with_supabase', { 
+        .rpc('authenticate_user', { 
           username_param: username, 
           password_param: password 
         });
 
+      console.log('🔐 AuthProvider: Respuesta de authenticate_user:', { data, error });
+
       if (error) {
-        console.error('Error en authenticate_user_with_supabase:', error);
+        console.error('❌ AuthProvider: Error en authenticate_user:', error);
         return { error: error.message };
       }
 
       const result = data as any;
       if (!result.success) {
+        console.log('❌ AuthProvider: authenticate_user falló:', result.error);
         return { error: result.error };
       }
 
-      // Ahora establecer la sesión de Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: result.user_name + '@planta.com',
-        password: password
-      });
+      console.log('✅ AuthProvider: authenticate_user exitoso, obteniendo datos del usuario...');
 
-      if (authError) {
-        console.error('Error estableciendo sesión de Supabase:', authError);
-        return { error: 'Error estableciendo sesión de autenticación' };
+      // Obtener información completa del usuario incluyendo el rol
+      const { data: userData, error: userError } = await supabase
+        .rpc('get_user_by_id', { user_id_param: result.user_id });
+
+      console.log('👤 AuthProvider: Respuesta de get_user_by_id:', { userData, userError });
+
+      if (userError || !(userData as any).success) {
+        console.error('❌ AuthProvider: Error en get_user_by_id:', userError);
+        return { error: 'Error obteniendo información del usuario' };
       }
 
+      const userInfo = (userData as any);
       const userDataComplete = {
-        id: result.user_id,
-        user_name: result.user_name,
-        role: result.role,
-        created_at: result.created_at
+        id: userInfo.id,
+        user_name: userInfo.user_name,
+        role: userInfo.role,
+        created_at: userInfo.created_at
       };
+      
+      console.log('✅ AuthProvider: Usuario completo creado:', userDataComplete);
       
       setUser(userDataComplete);
       localStorage.setItem('user', JSON.stringify(userDataComplete));
       
+      console.log('✅ AuthProvider: Usuario guardado en localStorage y estado');
+      
       return { error: null };
     } catch (error) {
-      console.error('Error inesperado en signIn:', error);
+      console.error('❌ AuthProvider: Error inesperado en signIn:', error);
       return { error: 'Error inesperado. Por favor intenta de nuevo.' };
     }
   };
@@ -139,13 +117,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      // Cerrar sesión de Supabase Auth
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Error cerrando sesión de Supabase:', error);
-      }
-      
       setUser(null);
       localStorage.removeItem('user');
       return { error: null };
