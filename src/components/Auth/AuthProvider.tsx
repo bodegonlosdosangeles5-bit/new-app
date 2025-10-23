@@ -35,28 +35,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay un usuario guardado en localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    // Verificar sesión de Supabase al cargar la aplicación
+    const checkSession = async () => {
       try {
-        setUser(JSON.parse(savedUser));
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error obteniendo sesión:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          // Obtener información del usuario desde la base de datos
+          const { data: userData, error: userError } = await supabase
+            .rpc('get_current_user');
+
+          if (userError || !(userData as any).success) {
+            console.error('Error obteniendo información del usuario:', userError);
+            // Limpiar sesión inválida
+            await supabase.auth.signOut();
+            localStorage.removeItem('user');
+          } else {
+            const userInfo = (userData as any);
+            const userDataComplete = {
+              id: userInfo.id,
+              user_name: userInfo.user_name,
+              role: userInfo.role,
+              created_at: userInfo.created_at
+            };
+            setUser(userDataComplete);
+            localStorage.setItem('user', JSON.stringify(userDataComplete));
+          }
+        } else {
+          // No hay sesión activa, verificar localStorage como fallback
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser));
+            } catch (error) {
+              console.error('Error parsing saved user:', error);
+              localStorage.removeItem('user');
+            }
+          }
+        }
       } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
+        console.error('Error verificando sesión:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    checkSession();
   }, []);
 
   const signIn = async (username: string, password: string) => {
     try {
+      // Usar la nueva función que establece la sesión de Supabase
       const { data, error } = await supabase
-        .rpc('authenticate_user', { 
+        .rpc('authenticate_user_with_supabase', { 
           username_param: username, 
           password_param: password 
         });
 
       if (error) {
+        console.error('Error en authenticate_user_with_supabase:', error);
         return { error: error.message };
       }
 
@@ -65,20 +108,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { error: result.error };
       }
 
-      // Obtener información completa del usuario incluyendo el rol
-      const { data: userData, error: userError } = await supabase
-        .rpc('get_user_by_id', { user_id_param: result.user_id });
+      // Ahora establecer la sesión de Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: result.user_name + '@planta.com',
+        password: password
+      });
 
-      if (userError || !(userData as any).success) {
-        return { error: 'Error obteniendo información del usuario' };
+      if (authError) {
+        console.error('Error estableciendo sesión de Supabase:', authError);
+        return { error: 'Error estableciendo sesión de autenticación' };
       }
 
-      const userInfo = (userData as any);
       const userDataComplete = {
-        id: userInfo.id,
-        user_name: userInfo.user_name,
-        role: userInfo.role,
-        created_at: userInfo.created_at
+        id: result.user_id,
+        user_name: result.user_name,
+        role: result.role,
+        created_at: result.created_at
       };
       
       setUser(userDataComplete);
@@ -86,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       return { error: null };
     } catch (error) {
+      console.error('Error inesperado en signIn:', error);
       return { error: 'Error inesperado. Por favor intenta de nuevo.' };
     }
   };
@@ -93,10 +139,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // Cerrar sesión de Supabase Auth
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error cerrando sesión de Supabase:', error);
+      }
+      
       setUser(null);
       localStorage.removeItem('user');
       return { error: null };
     } catch (error) {
+      console.error('Error inesperado en signOut:', error);
       return { error: 'Error al cerrar sesión' };
     }
   };

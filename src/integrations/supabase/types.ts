@@ -18,43 +18,43 @@ export type Database = {
         Row: {
           available: number
           created_at: string | null
-          formula_id: string
           id: number
           name: string
+          producto_id: string
           required: number
           unit: string
         }
         Insert: {
           available: number
           created_at?: string | null
-          formula_id: string
           id?: number
           name: string
+          producto_id: string
           required: number
           unit: string
         }
         Update: {
           available?: number
           created_at?: string | null
-          formula_id?: string
           id?: number
           name?: string
+          producto_id?: string
           required?: number
           unit?: string
         }
         Relationships: [
           {
             foreignKeyName: "available_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas"
+            referencedRelation: "productos"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "available_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas_complete"
+            referencedRelation: "productos_complete"
             referencedColumns: ["id"]
           },
         ]
@@ -136,45 +136,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      formulas: {
-        Row: {
-          batch_size: number
-          client_name: string | null
-          created_at: string | null
-          date: string | null
-          destination: string
-          id: string
-          name: string
-          status: string
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          batch_size?: number
-          client_name?: string | null
-          created_at?: string | null
-          date?: string | null
-          destination: string
-          id: string
-          name: string
-          status: string
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          batch_size?: number
-          client_name?: string | null
-          created_at?: string | null
-          date?: string | null
-          destination?: string
-          id?: string
-          name?: string
-          status?: string
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       inventory_items: {
         Row: {
@@ -281,44 +242,83 @@ export type Database = {
       missing_ingredients: {
         Row: {
           created_at: string | null
-          formula_id: string
           id: number
           name: string
+          producto_id: string
           required: number
           unit: string
         }
         Insert: {
           created_at?: string | null
-          formula_id: string
           id?: number
           name: string
+          producto_id: string
           required: number
           unit: string
         }
         Update: {
           created_at?: string | null
-          formula_id?: string
           id?: number
           name?: string
+          producto_id?: string
           required?: number
           unit?: string
         }
         Relationships: [
           {
             foreignKeyName: "missing_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas"
+            referencedRelation: "productos"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "missing_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas_complete"
+            referencedRelation: "productos_complete"
             referencedColumns: ["id"]
           },
         ]
+      }
+      productos: {
+        Row: {
+          batch_size: number
+          client_name: string | null
+          created_at: string | null
+          date: string | null
+          destination: string
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch_size?: number
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          destination: string
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch_size?: number
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          destination?: string
+          id?: string
+          name?: string
+          status?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       remito_items: {
         Row: {
@@ -424,6 +424,33 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          id: string
+          password: string
+          role: string
+          updated_at: string | null
+          user_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          password: string
+          role?: string
+          updated_at?: string | null
+          user_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          password?: string
+          role?: string
+          updated_at?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       available_ingredients_detailed: {
@@ -432,11 +459,11 @@ export type Database = {
           batch_size: number | null
           created_at: string | null
           destination: string | null
-          formula_id: string | null
-          formula_name: string | null
-          formula_status: string | null
           id: number | null
           name: string | null
+          producto_id: string | null
+          producto_name: string | null
+          producto_status: string | null
           required: number | null
           stock_status: string | null
           unit: string | null
@@ -444,21 +471,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "available_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas"
+            referencedRelation: "productos"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "available_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
+            columns: ["producto_id"]
             isOneToOne: false
-            referencedRelation: "formulas_complete"
+            referencedRelation: "productos_complete"
             referencedColumns: ["id"]
           },
         ]
       }
-      formulas_complete: {
+      missing_ingredients_detailed: {
+        Row: {
+          batch_size: number | null
+          created_at: string | null
+          destination: string | null
+          id: number | null
+          name: string | null
+          producto_id: string | null
+          producto_name: string | null
+          producto_status: string | null
+          required: number | null
+          unit: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missing_ingredients_formula_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missing_ingredients_formula_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos_complete: {
         Row: {
           available_ingredients_count: number | null
           batch_size: number | null
@@ -475,57 +532,110 @@ export type Database = {
         }
         Relationships: []
       }
-      formulas_stats: {
+      productos_stats: {
         Row: {
-          available_formulas: number | null
+          available_productos: number | null
           avg_batch_size: number | null
-          client_formulas: number | null
-          incomplete_formulas: number | null
-          stock_formulas: number | null
-          total_formulas: number | null
+          client_productos: number | null
+          incomplete_productos: number | null
+          stock_productos: number | null
+          total_productos: number | null
         }
         Relationships: []
       }
-      missing_ingredients_detailed: {
-        Row: {
-          batch_size: number | null
-          created_at: string | null
-          destination: string | null
-          formula_id: string | null
-          formula_name: string | null
-          formula_status: string | null
-          id: number | null
-          name: string | null
-          required: number | null
-          unit: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "missing_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
-            isOneToOne: false
-            referencedRelation: "formulas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "missing_ingredients_formula_id_fkey"
-            columns: ["formula_id"]
-            isOneToOne: false
-            referencedRelation: "formulas_complete"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
+      authenticate_user: {
+        Args: { password_param: string; username_param: string }
+        Returns: Json
+      }
+      authenticate_user_with_supabase: {
+        Args: { password_param: string; username_param: string }
+        Returns: Json
+      }
+      change_user_password: {
+        Args: { p_new_password: string; p_user_id: string }
+        Returns: boolean
+      }
+      create_user: {
+        Args: {
+          password_param: string
+          role_param?: string
+          username_param: string
+        }
+        Returns: Json
+      }
+      delete_complete_user: { Args: { p_user_id: string }; Returns: boolean }
+      delete_user: { Args: { user_id_param: string }; Returns: Json }
+      delete_user_with_role: { Args: { p_user_id: string }; Returns: boolean }
       generate_remito_villa_martelli: {
         Args: {
           p_destino: string
           p_fecha: string
+          p_items: Json
           p_observaciones: string
           p_total_kilos: number
         }
         Returns: Json
+      }
+      get_all_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_name: string
+        }[]
+      }
+      get_current_user: { Args: never; Returns: Json }
+      get_productos_complete: {
+        Args: never
+        Returns: {
+          available_ingredients_count: number
+          batch_size: number
+          client_name: string
+          created_at: string
+          date: string
+          destination: string
+          id: string
+          missing_ingredients_count: number
+          name: string
+          status: string
+          type: string
+          updated_at: string
+        }[]
+      }
+      get_user_by_id: { Args: { user_id_param: string }; Returns: Json }
+      get_user_stats: { Args: never; Returns: Json }
+      insert_user_role: {
+        Args: { p_role: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_user_admin: { Args: { p_user_id: string }; Returns: boolean }
+      logout_user: { Args: never; Returns: Json }
+      update_complete_user: {
+        Args: {
+          p_email?: string
+          p_full_name?: string
+          p_is_active?: boolean
+          p_role?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      update_user: {
+        Args: {
+          new_password?: string
+          new_role?: string
+          new_username?: string
+          user_id_param: string
+        }
+        Returns: Json
+      }
+      update_user_role: {
+        Args: { p_role: string; p_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
