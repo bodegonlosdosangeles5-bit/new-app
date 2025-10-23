@@ -90,7 +90,7 @@
     --success-foreground: 0 0% 100%;
     
     --warning: 45 80% 70%;
-    --warning-foreground: 260 30% 15%;
+    --warning-foreground: 0 0% 100%;
     
     --border: 260 20% 30%; /* Darker borders */
     --input: 260 20% 30%;

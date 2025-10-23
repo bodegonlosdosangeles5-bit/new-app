@@ -390,7 +390,7 @@ export const InventorySection = () => {
 
 
                 {item.status !== "normal" && (
-                  <div className="flex items-start space-x-2 p-3 rounded-lg bg-warning/10">
+                  <div className="flex items-start space-x-2 p-3 rounded-lg bg-warning/20 dark:bg-warning/30">
                     <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
                     <span className="card-description text-warning-foreground leading-relaxed">
                       {item.status === "critical" ? "Stock crítico - Ordenar urgente" : "Stock bajo - Considerar pedido"}
