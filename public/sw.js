@@ -5,7 +5,7 @@ const STATIC_CACHE_URLS = [
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
-  '/logo.svg'
+  '/icono.png'
 ];
 
 // Instalar Service Worker
@@ -149,8 +149,8 @@ self.addEventListener('push', (event) => {
     const data = event.data.json();
     const options = {
       body: data.body,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+      icon: '/icono.png',
+      badge: '/icono.png',
       vibrate: [100, 50, 100],
       data: {
         dateOfArrival: Date.now(),
