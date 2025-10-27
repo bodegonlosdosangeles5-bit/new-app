@@ -1,5 +1,4 @@
 import { motion } from "framer-motion"
-import { useState } from "react"
 
 export default function TarjetasMetalicasGrid() {
   const tarjetas = [
@@ -25,14 +24,12 @@ export default function TarjetasMetalicasGrid() {
       <motion.button
         whileHover={{
           scale: 1.1,
-          rotateX: 4,
-          rotateY: -4,
-          boxShadow: "0px 0px 25px rgba(255, 215, 0, 0.6)",
         }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: "spring", stiffness: 250, damping: 15 }}
         className="mt-12 px-8 py-3 bg-yellow-500 text-black font-semibold rounded-xl 
-                   shadow-md transition-colors duration-300 hover:bg-yellow-400"
+                   shadow-md transition-all duration-300 ease-in-out
+                   hover:bg-yellow-400 hover:scale-110 hover:shadow-lg hover:shadow-yellow-500/40"
       >
         Crear nuevo registro
       </motion.button>
@@ -46,32 +43,17 @@ interface TarjetaMetalicaProps {
 }
 
 function TarjetaMetalica({ titulo, texto }: TarjetaMetalicaProps) {
-  const [hovered, setHovered] = useState(false)
-
   return (
     <motion.div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       whileHover={{
-        scale: 1.07,
-        rotateX: 6,
-        rotateY: -6,
-        boxShadow: "0px 8px 24px rgba(255, 215, 0, 0.4)",
+        scale: 1.05,
       }}
       transition={{ type: "spring", stiffness: 200, damping: 10 }}
-      className="relative bg-neutral-900 border border-neutral-800 rounded-2xl 
-                 p-8 text-center overflow-hidden cursor-pointer
-                 transition-colors duration-300 hover:border-yellow-400"
+      className="bg-white/10 backdrop-blur-md rounded-2xl 
+                 p-8 text-center shadow-md cursor-pointer
+                 transition-all duration-300 ease-in-out
+                 hover:shadow-xl hover:scale-105 hover:border hover:border-yellow-400/60 hover:bg-white/20"
     >
-      {/* Brillo dorado en movimiento */}
-      <motion.div
-        initial={{ left: "-150%" }}
-        animate={hovered ? { left: "150%" } : { left: "-150%" }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
-        className="absolute top-0 w-1/3 h-full bg-gradient-to-r 
-                   from-transparent via-yellow-400/40 to-transparent skew-x-12"
-      ></motion.div>
-
       <h3 className="text-yellow-400 text-xl font-semibold mb-3">{titulo}</h3>
       <p className="text-gray-300">{texto}</p>
     </motion.div>

@@ -328,7 +328,9 @@ export const InventorySection = () => {
       {!loading && !error && filteredItems.length > 0 && (
         <div className="cards-grid">
           {filteredItems.map((item) => (
-          <Card key={item.id} className="card-elegant">
+          <Card key={item.id} className="bg-white/10 backdrop-blur-md rounded-2xl shadow-md
+                                        transition-all duration-300 ease-in-out
+                                        hover:shadow-xl hover:scale-105 hover:border hover:border-yellow-400/60 hover:bg-white/20">
             <CardContent className="card-content">
               <div className="flex items-start justify-between gap-2 mb-4">
                 <div className="min-w-0 flex-1">
@@ -351,7 +353,9 @@ export const InventorySection = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditItem(item)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground
+                               transition-all duration-300 ease-in-out
+                               hover:scale-110 hover:shadow-lg"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>

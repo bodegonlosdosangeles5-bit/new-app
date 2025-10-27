@@ -146,7 +146,10 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
           return (
             <Card 
               key={index} 
-              className={`metric-card flex-1 ${isClickable ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+              className={`metric-card flex-1 bg-white/10 backdrop-blur-md rounded-2xl shadow-md
+                          transition-all duration-300 ease-in-out
+                          hover:shadow-xl hover:scale-105 hover:border hover:border-yellow-400/60 hover:bg-white/20
+                          ${isClickable ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (metric.hasOutOfStock) {
                   setIsOutOfStockOpen(true);
