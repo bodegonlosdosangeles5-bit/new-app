@@ -104,6 +104,26 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
     return inventoryItems.filter(item => (item.currentStock || 0) <= 0);
   }, [inventoryItems]);
 
+  // Totales para progresos proporcionales
+  const totalInventoryItems = inventoryItems.length || 0;
+  const totalProductos = formulasData.length || 0;
+  const totalKilosTeoricos = useMemo(() => {
+    return formulasData.reduce((sum, f) => sum + (f.batchSize || 0), 0);
+  }, [formulasData]);
+
+  // Progresos calculados
+  const progressOutOfStock = totalInventoryItems > 0
+    ? Math.min(100, Math.max(0, Math.round((outOfStockItems.length / totalInventoryItems) * 100)))
+    : 0;
+
+  const progressTerminados = totalProductos > 0
+    ? Math.min(100, Math.max(0, Math.round((formulasTerminadas.length / totalProductos) * 100)))
+    : 0;
+
+  const progressKilos = totalKilosTeoricos > 0
+    ? Math.min(100, Math.max(0, Math.round((kilosDisponibles / totalKilosTeoricos) * 100)))
+    : 0;
+
   const metrics = [
     {
       title: "Materias Primas sin Stock",
@@ -111,7 +131,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "items faltantes",
       icon: Package,
       color: "destructive",
-      progress: 0,
+      progress: progressOutOfStock,
       hasOutOfStock: true,
     },
     {
@@ -120,7 +140,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "para Villa Martelli",
       icon: FlaskConical,
       color: "secondary",
-      progress: 75,
+      progress: progressTerminados,
       hasNavigation: true,
     },
     {
@@ -129,7 +149,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "productos producidos",
       icon: TrendingUp,
       color: "accent",
-      progress: 90,
+      progress: progressKilos,
       hasFormulasList: true,
     },
   ];

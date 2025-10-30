@@ -94,7 +94,7 @@ const Index = () => {
           <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
             {/* Dashboard Header with Date/Time */}
             <div className="mb-6 sm:mb-8">
-              <DashboardHeader />
+              <DashboardHeader enableDateDialog />
             </div>
             
             <div className="px-8 sm:px-12 lg:px-16 xl:px-24">
