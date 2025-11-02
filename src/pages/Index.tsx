@@ -8,6 +8,7 @@ import { ProductionSection } from "@/components/ProductionSection";
 import { UserAdminPanel } from "@/components/UserAdminPanel";
 import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
+import { useUserActivity } from "@/hooks/useUserActivity";
 import { Producto } from "@/services/productoService";
 import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { AuthProvider } from "@/components/Auth/AuthProvider";
@@ -30,6 +31,9 @@ const Index = () => {
 
   // Usar el hook de actualizaciones en tiempo real
   const { isConnected, lastUpdate } = useRealtimeUpdates();
+  
+  // Rastrear actividad del usuario (heartbeat)
+  useUserActivity();
   
   // Logging para debug
   console.log('🏠 Index.tsx - Estado actual:', { 
@@ -69,7 +73,10 @@ const Index = () => {
           deleteFormula={deleteProducto}
           addMissingIngredient={addMissingIngredient}
           removeMissingIngredient={removeMissingIngredient}
-          updateIncompleteFormulasStatus={updateIncompleteProductosStatus}
+          updateIncompleteFormulasStatus={async () => {
+            const result = await updateIncompleteProductosStatus();
+            return { updated: result.updated, formulas: result.productos };
+          }}
           loading={loading}
           error={error}
         />;

@@ -20,7 +20,8 @@ import {
   Shield,
   Search,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Circle
 } from 'lucide-react';
 import { UserProfile, CreateUserData, UpdateUserData, UserService } from '@/services/userService';
 import { useRealtimeUsers } from '@/hooks/useRealtimeUsers';
@@ -174,6 +175,15 @@ export const UserAdminPanel: React.FC = () => {
     });
   };
 
+  // Función para determinar si un usuario está activo (actualizado en los últimos 5 minutos)
+  const isUserActive = (user: UserProfile): boolean => {
+    if (!user.updated_at) return false;
+    const updatedTime = new Date(user.updated_at).getTime();
+    const now = Date.now();
+    const fiveMinutesInMs = 5 * 60 * 1000; // 5 minutos en milisegundos
+    return (now - updatedTime) < fiveMinutesInMs;
+  };
+
   if (loading && users.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -315,13 +325,23 @@ export const UserAdminPanel: React.FC = () => {
                                             hover:shadow-xl hover:scale-105 hover:border hover:border-yellow-400/60 hover:bg-white/20">
               <CardHeader className="pb-3 px-4 sm:px-6">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base sm:text-lg font-semibold truncate text-yellow-400">
-                      {user.user_name}
-                    </CardTitle>
-                    <p className="text-xs sm:text-sm text-gray-300 truncate">Usuario</p>
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base sm:text-lg font-semibold truncate text-yellow-400 flex items-center gap-2">
+                        {user.user_name}
+                        {isUserActive(user) && (
+                          <span className="relative" title="Usuario activo">
+                            <Circle className="h-2 w-2 fill-green-500 text-green-500 animate-pulse" />
+                          </span>
+                        )}
+                      </CardTitle>
+                      <p className="text-xs sm:text-sm text-gray-300 truncate">Usuario</p>
+                    </div>
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    {isUserActive(user) && (
+                      <span className="text-xs text-green-400 font-medium hidden sm:inline">Activo</span>
+                    )}
                     <Badge 
                       variant={user.role === 'admin' ? "default" : "outline"}
                       className="text-xs"

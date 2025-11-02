@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Producto } from "@/services/productoService";
 import { useRealtimeInventory } from "@/hooks/useRealtimeInventory";
 import { useRealtimeProductos } from "@/hooks/useRealtimeProductos";
@@ -24,6 +24,9 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
   const [isOutOfStockOpen, setIsOutOfStockOpen] = useState(false);
   const [isFormulasListOpen, setIsFormulasListOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [animatedProgressKilos, setAnimatedProgressKilos] = useState(0);
+  const [animatedProgressTerminados, setAnimatedProgressTerminados] = useState(0);
+  const [animatedProgressOutOfStock, setAnimatedProgressOutOfStock] = useState(0);
   
   // Hook para obtener datos de inventario
   const { inventoryItems, loading: inventoryLoading } = useRealtimeInventory();
@@ -111,18 +114,104 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
     return formulasData.reduce((sum, f) => sum + (f.batchSize || 0), 0);
   }, [formulasData]);
 
-  // Progresos calculados
-  const progressOutOfStock = totalInventoryItems > 0
-    ? Math.min(100, Math.max(0, Math.round((outOfStockItems.length / totalInventoryItems) * 100)))
-    : 0;
+  // Progreso de materias primas sin stock basado en 200 items como máximo
+  const MAX_OUT_OF_STOCK = 200;
+  const progressOutOfStockTarget = Math.min(100, Math.max(0, Math.round((outOfStockItems.length / MAX_OUT_OF_STOCK) * 100)));
 
-  const progressTerminados = totalProductos > 0
-    ? Math.min(100, Math.max(0, Math.round((formulasTerminadas.length / totalProductos) * 100)))
-    : 0;
+  // Progreso de productos terminados basado en 50 productos como máximo
+  const MAX_PRODUCTOS_TERMINADOS = 50;
+  const progressTerminadosTarget = Math.min(100, Math.max(0, Math.round((formulasTerminadas.length / MAX_PRODUCTOS_TERMINADOS) * 100)));
 
-  const progressKilos = totalKilosTeoricos > 0
-    ? Math.min(100, Math.max(0, Math.round((kilosDisponibles / totalKilosTeoricos) * 100)))
-    : 0;
+  // Progreso de kilos basado en 5000 kilos como máximo
+  const MAX_KILOS = 5000;
+  const progressKilosTarget = Math.min(100, Math.max(0, Math.round((kilosDisponibles / MAX_KILOS) * 100)));
+
+  // Animación del progreso de kilos desde 0 hasta el valor final
+  useEffect(() => {
+    // Resetear el progreso animado cuando cambian los kilos disponibles
+    setAnimatedProgressKilos(0);
+
+    if (progressKilosTarget > 0) {
+      const duration = 2000; // Duración total de la animación: 2 segundos
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Usar una función de easing para una animación más suave (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const newValue = progressKilosTarget * easeOut;
+        
+        setAnimatedProgressKilos(newValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      const animationFrame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationFrame);
+    }
+  }, [progressKilosTarget]);
+
+  // Animación del progreso de productos terminados desde 0 hasta el valor final
+  useEffect(() => {
+    // Resetear el progreso animado cuando cambian los productos terminados
+    setAnimatedProgressTerminados(0);
+
+    if (progressTerminadosTarget > 0) {
+      const duration = 2000; // Duración total de la animación: 2 segundos
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Usar una función de easing para una animación más suave (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const newValue = progressTerminadosTarget * easeOut;
+        
+        setAnimatedProgressTerminados(newValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      const animationFrame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationFrame);
+    }
+  }, [progressTerminadosTarget, formulasTerminadas.length]);
+
+  // Animación del progreso de materias primas sin stock desde 0 hasta el valor final
+  useEffect(() => {
+    // Resetear el progreso animado cuando cambian las materias primas sin stock
+    setAnimatedProgressOutOfStock(0);
+
+    if (progressOutOfStockTarget > 0) {
+      const duration = 2000; // Duración total de la animación: 2 segundos
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Usar una función de easing para una animación más suave (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const newValue = progressOutOfStockTarget * easeOut;
+        
+        setAnimatedProgressOutOfStock(newValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      const animationFrame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationFrame);
+    }
+  }, [progressOutOfStockTarget, outOfStockItems.length]);
 
   const metrics = [
     {
@@ -131,7 +220,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "items faltantes",
       icon: Package,
       color: "destructive",
-      progress: progressOutOfStock,
+      progress: animatedProgressOutOfStock,
       hasOutOfStock: true,
     },
     {
@@ -140,7 +229,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "para Villa Martelli",
       icon: FlaskConical,
       color: "secondary",
-      progress: progressTerminados,
+      progress: animatedProgressTerminados,
       hasNavigation: true,
     },
     {
@@ -149,7 +238,7 @@ export const DashboardMetrics = ({ formulas = [], onNavigateToProduction }: Dash
       subtitle: "productos producidos",
       icon: TrendingUp,
       color: "accent",
-      progress: progressKilos,
+      progress: animatedProgressKilos,
       hasFormulasList: true,
     },
   ];

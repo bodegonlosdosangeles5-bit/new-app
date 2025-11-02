@@ -510,16 +510,18 @@ export const FormulasSection = ({
               <CheckCircle className="h-4 w-4" />
               {isUpdatingStatus ? "Actualizando..." : "Actualizar Completadas"}
             </Button>
-            <Select value={destinationFilter} onValueChange={setDestinationFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por destino" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los destinos</SelectItem>
-                <SelectItem value="Florencio Varela">Florencio Varela</SelectItem>
-                <SelectItem value="Villa Martelli">Villa Martelli</SelectItem>
-              </SelectContent>
-            </Select>
+            {!showOnlyIncomplete && (
+              <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por destino" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los destinos</SelectItem>
+                  <SelectItem value="Florencio Varela">Florencio Varela</SelectItem>
+                  <SelectItem value="Villa Martelli">Villa Martelli</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
         <Button 
@@ -565,9 +567,11 @@ export const FormulasSection = ({
                     <p className="text-base text-foreground dark:text-white mt-1">
                       Lote: {formula.id} • Cantidad: {formula.batchSize} kg
                     </p>
-                    <p className="text-base text-foreground dark:text-white font-medium mt-1">
-                      Destino: {formula.destination}
-                    </p>
+                    {!showOnlyIncomplete && (
+                      <p className="text-base text-foreground dark:text-white font-medium mt-1">
+                        Destino: {formula.destination}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground dark:text-white/80 mt-1">
                       Fecha: {formula.date ? new Date(formula.date).toLocaleDateString('es-ES', {
                         day: '2-digit',

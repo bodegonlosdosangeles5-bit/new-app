@@ -218,4 +218,29 @@ export class UserService {
       return false;
     }
   }
+
+  /**
+   * Actualizar timestamp de actividad del usuario (heartbeat)
+   */
+  static async updateUserActivity(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('update_user', {
+        user_id_param: userId,
+        new_username: null,
+        new_password: null,
+        new_role: null
+      });
+
+      if (error) {
+        console.error('Error actualizando actividad del usuario:', error);
+        return false;
+      }
+
+      const result = data as any;
+      return result.success;
+    } catch (error) {
+      console.error('Error en updateUserActivity:', error);
+      return false;
+    }
+  }
 }
